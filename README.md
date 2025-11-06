@@ -20,13 +20,8 @@
 
 ## Color Schemes ##
 
-#1E1E24 - primary text color (raisin black)
-
-#444140 - secondary text color (jet)
-
-#F7EBE8 - background color (seashell)
-
-
-#ffa987  - header / footer color (atomic tangerine)
-
-E54B4B - miscellaneous color (imperial red)
+`#1E1E24` - primary text color (raisin black)
+`#444140` - secondary text color (jet)
+`#F7EBE8` - background color (seashell)
+`#FFA987` - header / footer color (atomic tangerine)
+`#E54B4B` - miscellaneous color (imperial red)
