@@ -28,3 +28,6 @@
 `#FFA987` - header / footer color (atomic tangerine)<br>
 `#E54B4B` - miscellaneous color (imperial red)
 
+- **[Reference Link](https://coolors.co/e54b4b-ffa987-f7ebe8-444140-1e1e24)**
+  Used for our color scheme
+
