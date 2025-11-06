@@ -10,15 +10,15 @@
 
 ## Design / Theme ##
 
-# Typography #
+## Typography ##
 
-Google Sans Code
-https://fonts.google.com/specimen/Google+Sans+Code?categoryFilters=Feeling:%2FExpressive%2FBusiness
+- **[Google Sans Code](https://fonts.google.com/specimen/Google+Sans+Code?categoryFilters=Feeling:%2FExpressive%2FBusiness)**  
+  Used for body text and general UI content.  
 
-Zalando Sans SemiExpanded
-https://fonts.google.com/specimen/Zalando+Sans+SemiExpanded?categoryFilters=Feeling:%2FExpressive%2FBusiness
+- **[Zalando Sans SemiExpanded](https://fonts.google.com/specimen/Zalando+Sans+SemiExpanded?categoryFilters=Feeling:%2FExpressive%2FBusiness)**  
+  Used for headings, section titles, and emphasis.  
 
-# Color Schemes #
+## Color Schemes ##
 
 #1E1E24 - primary text color (raisin black)
 
