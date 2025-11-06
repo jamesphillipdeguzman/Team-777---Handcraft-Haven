@@ -1,4 +1,6 @@
-# TEAM 07 - WDD 430 #
+# TEAM 07 | WDD430 (Web Full Stack Development) #
+## Handcraft Haven Project ##
+
 ## Members ##
 
 - James Phillip De Guzman
