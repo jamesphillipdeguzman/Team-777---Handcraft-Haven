@@ -29,4 +29,4 @@ https://fonts.google.com/specimen/Zalando+Sans+SemiExpanded?categoryFilters=Feel
 
 #ffa987  - header / footer color (atomic tangerine)
 
-# E54B4B - miscellaneous color (imperial red)
+E54B4B - miscellaneous color (imperial red)
