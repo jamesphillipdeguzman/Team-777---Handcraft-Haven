@@ -6,3 +6,27 @@
 - Diego Andres Ganados
 - Rafael Henrique Antunes
 - Bruce Bennet
+
+
+## Design / Theme ##
+
+# Typography #
+
+Google Sans Code
+https://fonts.google.com/specimen/Google+Sans+Code?categoryFilters=Feeling:%2FExpressive%2FBusiness
+
+Zalando Sans SemiExpanded
+https://fonts.google.com/specimen/Zalando+Sans+SemiExpanded?categoryFilters=Feeling:%2FExpressive%2FBusiness
+
+# Color Schemes #
+
+#1E1E24 - primary text color (raisin black)
+
+#444140 - secondary text color (jet)
+
+#F7EBE8 - background color (seashell)
+
+
+#ffa987  - header / footer color (atomic tangerine)
+
+# E54B4B - miscellaneous color (imperial red)
