@@ -20,22 +20,17 @@ export default function LoginPage() {
             body: JSON.stringify({ email, password }),
         });
 
-        const data = await res.json();
+const data = await res.json();
 
-        if (!res.ok) {
-            alert(data?.error || "Unable to log in. Please try again.");
-            return;
-        }
+if (!res.ok) {
+    alert(data?.error || "Unable to log in. Please try again.");
+    return;
+}
 
-        const token = data?.token;
-        if (token && typeof document !== "undefined") {
-            const maxAge = 60 * 60 * 24 * 7; // 7 days
-            const secure = process.env.NODE_ENV === "production" ? "Secure;" : "";
-            document.cookie = `token=${token}; Path=/; Max-Age=${maxAge}; SameSite=Lax; ${secure}`;
-        }
-
-        alert(data?.message || "Login successful!");
-        router.replace("/dashboard");
+// Cookie is already set by the server as HttpOnly
+// No need to set it client-side
+alert(data?.message || "Login successful!");
+router.replace("/dashboard");
     }
 
     return (
