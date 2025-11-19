@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Search, ShoppingCart, Heart, User, Menu } from "lucide-react";
+import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
 
 export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,7 +18,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-6">
@@ -64,6 +64,12 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Desktop Icons */}
           <div className="hidden md:flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/login">
+                <LogIn className="h-5 w-5" />
+                <span className="sr-only">Login</span>
+              </Link>
+            </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="/wishlist">
                 <Heart className="h-5 w-5" />
@@ -117,6 +123,12 @@ export function Navbar() {
                   className="text-sm font-medium transition-colors hover:text-primary"
                 >
                   Products
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Login
                 </Link>
                 <Link
                   href="/wishlist"
