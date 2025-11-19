@@ -93,7 +93,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <nav className="flex flex-col gap-4 mt-8">
+              <nav className="flex flex-col gap-4 mt-8 m-5">
                 <form onSubmit={handleSearch} className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

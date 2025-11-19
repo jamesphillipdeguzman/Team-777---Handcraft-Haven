@@ -5,7 +5,7 @@ import { Facebook, Instagram, Twitter, Mail } from "lucide-react";
 export function Footer() {
   return (
     <footer className="w-full border-t bg-background">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12 max-md:justify-center text-center">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
@@ -14,7 +14,7 @@ export function Footer() {
               Your destination for unique handcrafted products and artisanal
               goods.
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 max-md:justify-center text-center">
               <Link
                 href="#"
                 className="text-muted-foreground hover:text-primary transition-colors"
