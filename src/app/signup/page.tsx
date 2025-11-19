@@ -18,17 +18,14 @@ export default function SignupPage() {
             body: JSON.stringify({ email, password }),
         });
 
-        const data = await res.json();
-        alert(data.message || data.error);
+const data = await res.json();
 
-        if (res.ok) {
-            // Redirect to login page
-            // window.location.href = "/login";
-            router.push("/login");
-
-        } else {
-            alert(data.error);
-        }
+if (res.ok) {
+    alert(data.message || "Account created successfully!");
+    router.push("/login");
+} else {
+    alert(data.error || "Signup failed. Please try again.");
+}
     }
 
     return (
