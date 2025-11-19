@@ -40,6 +40,12 @@ export function Navbar() {
             >
               Products
             </Link>
+            <Link
+              href="/ratings"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Ratings
+            </Link>
           </nav>
         </div>
 
