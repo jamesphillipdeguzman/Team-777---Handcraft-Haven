@@ -4,7 +4,6 @@ dotenv.config();
 import { Client } from "pg";
 
 
-console.log("DATABASE_URL =", process.env.DATABASE_URL); // Confirm the environment variable is loaded
 
 // Load database URL from environment variables
 const client = new Client({
