@@ -84,6 +84,9 @@ export default function ClientSideRating({ ratings }: Props) {
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold">Ratings</h1>
+            <p className="mt-4 text-gray-600">
+                Work In progress: Ratings will be connected to Products and Artisans, but momentarily stand on their own.
+            </p>
 
             {/* This is the form the user uses to make a new comments */}
             <div className="mt-8 p-4 border rounded-lg shadow-md mb-8">
