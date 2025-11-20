@@ -18,7 +18,10 @@
     "next": "16.0.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "pg": "^8.16.3",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
