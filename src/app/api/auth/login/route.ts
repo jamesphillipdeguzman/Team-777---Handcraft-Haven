@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import client from '@/lib/db';
+import pool from '@/lib/db';
 import { comparePassword } from '@/lib/hash';
 import { signToken } from '@/lib/auth';
 
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
         }
 
-        const res = await client.query('SELECT * FROM users WHERE email=$1', [email]);
+        const res = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
         const user = res.rows[0];
 
         if (!user) {
