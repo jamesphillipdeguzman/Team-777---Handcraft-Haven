@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import client from '@/lib/db';
+import pool from '@/lib/db';
 import { hashPassword } from '@/lib/hash';
 import { signToken } from '@/lib/auth';
 
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await client.query(
+    const existingUser = await pool.query(
         'SELECT id FROM users WHERE email=$1',
         [email]
     );
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Insert new user into the database
-    const insertRes = await client.query(
+    const insertRes = await pool.query(
         'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
         [email, hashedPassword]
     );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import client from "@/lib/db";
+import pool from "@/lib/db";
 
 export async function POST(req: Request) {
     try {
@@ -17,12 +17,12 @@ export async function POST(req: Request) {
         }
 
         // This fixes the sequence of Id's just in case they are out of sync
-        await client.query(
+        await pool.query(
             `SELECT setval('ratings_id_seq', COALESCE((SELECT MAX(id) FROM ratings), 0))`
         );
 
         // This inserts the review to the database
-        const result = await client.query(
+        const result = await pool.query(
             "INSERT INTO ratings (name, comment, star_rating) VALUES ($1, $2, $3) RETURNING *",
             [name, comment, starRatingNumber]
         );
