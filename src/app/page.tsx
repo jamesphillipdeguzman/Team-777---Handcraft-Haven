@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -15,7 +16,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-4 text-base sm:text-lg md:text-xl transition-all duration-700">
-               100% Handmade.
+              100% Handmade.
             </p>
 
             <button className="mt-6 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-200 hover:text-black transition duration-300">
@@ -26,7 +27,7 @@ export default function Home() {
         <div className="container mx-auto md:px-30 md:py-30 max-md:px-10 max-md:py-10 space-y-12">
           {/* image 1 */}
           <div className="flex flex-col md:flex-row items-center p-7 rounded-2xl">
-            <img
+            <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
               alt=""
               src="/images/image1.webp"
@@ -38,7 +39,7 @@ export default function Home() {
 
           {/* image 2 */}
           <div className="flex flex-col md:flex-row-reverse items-center p-7 rounded-2xl">
-            <img
+            <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
               alt=""
               src="/images/image2.webp"
@@ -50,7 +51,7 @@ export default function Home() {
 
           {/* image 3 */}
           <div className="flex flex-col md:flex-row items-center p-7 rounded-2xl">
-            <img
+            <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
               alt=""
               src="/images/image3.webp"
