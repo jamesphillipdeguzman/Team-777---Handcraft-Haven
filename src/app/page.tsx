@@ -29,8 +29,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center p-7 rounded-2xl">
             <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
-              alt=""
+              alt="Hand and crafting tools"
               src="/images/image1.webp"
+              width={1367}
+              height={2000}
             />
             <p className="text-xl md:text-3xl font-medium md:ml-8 mt-6 md:mt-0 text-center md:text-justify">
               Our handcrafted creations carry stories, details, and emotions that only human hands can transmit.
@@ -41,8 +43,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row-reverse items-center p-7 rounded-2xl">
             <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
-              alt=""
+              alt="Lady arranging handmade pottery"
               src="/images/image2.webp"
+              width={1333}
+              height={2000}
             />
             <p className="text-xl md:text-3xl font-medium md:mr-8 mt-6 md:mt-0 text-center md:text-justify">
               Transform your space with handcrafted pieces carefully created to bring warmth, style, and personality to your everyday life.
@@ -53,8 +57,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center p-7 rounded-2xl">
             <Image
               className="w-120 h-120 object-cover shadow-xl rounded-md"
-              alt=""
+              alt="Chair made from wood and fabric"
               src="/images/image3.webp"
+              width={1368}
+              height={2000}
             />
             <p className="text-xl md:text-3xl font-medium md:ml-8 mt-6 md:mt-0 text-center md:text-justify">
               Our craftsmanship invites you to slow down and appreciate the small beauties in every texture, curve, and detail.

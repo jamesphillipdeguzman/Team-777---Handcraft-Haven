@@ -80,10 +80,7 @@ export function Navbar() {
           {/* Desktop Icons */}
           <div className="hidden md:flex items-center gap-2">
             {loggedIn === false && (
-              <Button
-                variant="ghost"
-                className={`flex items-center gap-1 ${loggedIn ? "invisible" : ""}`}
-              >
+              <Button variant="ghost" className="flex items-center gap-1">
                 <Link href="/login" className="flex items-center gap-1">
                   <LogIn className="h-5 w-5" />
                   <span>Login</span>
@@ -145,7 +142,7 @@ export function Navbar() {
                 >
                   Products
                 </Link>
-                {!loggedIn && (
+                {loggedIn === false && (
                   <Link href="/login" className="text-sm font-medium transition-colors hover:text-primary">
                     Login
                   </Link>

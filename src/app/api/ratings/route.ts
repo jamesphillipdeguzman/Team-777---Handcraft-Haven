@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { NextResponse, NextRequest } from "next/server";
+import { sql } from "@/lib/db";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const { name, comment, star_rating } = await req.json();
 
@@ -17,17 +17,12 @@ export async function POST(req: Request) {
         }
 
         // This fixes the sequence of Id's just in case they are out of sync
-        await pool.query(
-            `SELECT setval('ratings_id_seq', COALESCE((SELECT MAX(id) FROM ratings), 0))`
-        );
+        await sql`SELECT setval('ratings_id_seq', COALESCE((SELECT MAX(id) FROM ratings), 0))`;
 
         // This inserts the review to the database
-        const result = await pool.query(
-            "INSERT INTO ratings (name, comment, star_rating) VALUES ($1, $2, $3) RETURNING *",
-            [name, comment, starRatingNumber]
-        );
+        const result = await sql`INSERT INTO ratings (name, comment, star_rating) VALUES (${name}, ${comment}, ${starRatingNumber}) RETURNING *`;
 
-        return NextResponse.json(result.rows[0]);
+        return NextResponse.json(result[0]);
     } catch (err) {
         console.error("Error inserting rating:", err);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

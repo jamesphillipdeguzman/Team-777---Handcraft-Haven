@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { comparePassword } from '@/lib/hash';
-import { signToken } from '@/lib/auth';
+// src/app/api/auth/login/route.ts
+import { NextResponse, NextRequest } from "next/server";
+import { sql } from "@/lib/db";
+import { comparePassword } from "@/lib/hash";
+import { signToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,28 +12,25 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
         }
 
-        const res = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-        const user = res.rows[0];
+        const [user] = await sql`SELECT * FROM users WHERE email=${email}`;
 
         if (!user) {
-            return NextResponse.json({ error: "Invalid credentials!" }, { status: 401 });
+            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
         const valid = await comparePassword(password, user.password_hash);
         if (!valid) {
-            return NextResponse.json({ error: "Invalid credentials!" }, { status: 401 });
+            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
         const token = signToken({ userId: user.id, email: user.email });
 
-        const response = NextResponse.json({ message: "Login successful!", token });
-
+        const response = NextResponse.json({ message: "Login successful" });
         response.cookies.set("token", token, {
             httpOnly: true,
-            sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
             path: "/",
-            maxAge: 60 * 60 * 24 * 7,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 
         return response;
