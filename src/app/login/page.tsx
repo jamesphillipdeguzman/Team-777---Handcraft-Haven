@@ -7,7 +7,6 @@ import Link from 'next/link';
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const router = useRouter();
 
     async function handleSubmit(e: React.FormEvent) {
@@ -20,17 +19,17 @@ export default function LoginPage() {
             body: JSON.stringify({ email, password }),
         });
 
-const data = await res.json();
+        const data = await res.json();
 
-if (!res.ok) {
-    alert(data?.error || "Unable to log in. Please try again.");
-    return;
-}
+        if (!res.ok) {
+            alert(data?.error || "Unable to log in. Please try again.");
+            return;
+        }
 
-// Cookie is already set by the server as HttpOnly
-// No need to set it client-side
-alert(data?.message || "Login successful!");
-router.replace("/dashboard");
+        // Cookie is already set by the server as HttpOnly
+        // No need to set it client-side
+        alert(data?.message || "Login successful!");
+        router.replace("/dashboard");
     }
 
     return (

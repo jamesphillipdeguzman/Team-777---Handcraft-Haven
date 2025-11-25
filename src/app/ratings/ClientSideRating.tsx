@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/static-components */
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ type Review = {
     comment: string;
     star_rating: number;
 };
+
 
 type Props = {
     ratings: Review[];
