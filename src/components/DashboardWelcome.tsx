@@ -77,7 +77,7 @@ export function DashboardWelcome() {
                 </Button>
             </div>
             {/* Only show the uploader if the user is loaded */}
-            {user && <ImageUploader productId={1} />}
+            {user && <ImageUploader />}
         </div>
     );
 }
