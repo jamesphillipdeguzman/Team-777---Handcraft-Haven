@@ -37,11 +37,11 @@ export async function POST(
 
         // Check if product exists
         const existingProduct = await sql`
-      SELECT id
-      FROM products
-      WHERE id = ${productId}
-      LIMIT 1
-    `;
+        SELECT id
+        FROM products
+        WHERE id = ${productId}
+        LIMIT 1
+        `;
         if (!existingProduct.length) {
             return NextResponse.json(
                 {
@@ -82,9 +82,9 @@ export async function POST(
 
         // Insert image URL into product_images table
         await sql`
-      INSERT INTO product_images (product_id, image_url)
-      VALUES (${productId}, ${uploadResult.secure_url})
-    `;
+        INSERT INTO product_images (product_id, image_url)
+        VALUES (${productId}, ${uploadResult.secure_url})
+        `;
 
         return NextResponse.json({
             message: "Image uploaded successfully",
@@ -96,5 +96,37 @@ export async function POST(
             { error: (err as Error).message || "Internal Server Error" },
             { status: 500 }
         );
+    }
+}
+
+
+// API route to fetch images for a product
+
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const productId = Number(id);
+        if (!Number.isInteger(productId) || productId <= 0) {
+            return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+        }
+
+        const rows = await sql`
+                SELECT id, 
+                image_url,
+                is_primary,
+                created_at
+                FROM product_images
+                WHERE product_id = ${productId}
+                ORDER BY created_at DESC`;
+        return NextResponse.json({ images: rows });
+
+    } catch (err: unknown) {
+        console.error("Fetching product images failed:", err);
+        return NextResponse.json({
+            error: (err as Error).message || "Internal Server Error"
+        }, { status: 500 });
     }
 }

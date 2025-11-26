@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',  // allow all paths
+      },
+    ],
+  },
+
   // Optional redirects example
   async redirects() {
     return [
