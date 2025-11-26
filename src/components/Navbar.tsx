@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
 
 export function Navbar() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/status")
@@ -79,13 +79,14 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Desktop Icons */}
           <div className="hidden md:flex items-center gap-2">
-            {!loggedIn && (
+            {loggedIn === false && (
               <Button variant="ghost" className="flex items-center gap-1">
                 <Link href="/login" className="flex items-center gap-1">
                   <LogIn className="h-5 w-5" />
                   <span>Login</span>
                 </Link>
               </Button>
+
             )}
             <Button variant="ghost" size="icon" asChild>
               <Link href="/wishlist">
@@ -116,7 +117,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <nav className="flex flex-col gap-4 mt-8">
+              <nav className="flex flex-col gap-4 mt-8 m-5">
                 <form onSubmit={handleSearch} className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -141,7 +142,7 @@ export function Navbar() {
                 >
                   Products
                 </Link>
-                {!loggedIn && (
+                {loggedIn === false && (
                   <Link href="/login" className="text-sm font-medium transition-colors hover:text-primary">
                     Login
                   </Link>

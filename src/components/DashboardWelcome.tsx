@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import ImageUploader from './ImageUploader';
 
 type User = {
     id: number;
@@ -63,15 +64,20 @@ export function DashboardWelcome() {
             : "Welcome!";
 
     return (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-card/50 p-4">
-            <p className="text-lg font-semibold text-foreground">{welcomeText}</p>
-            <Button
-                variant="outline"
-                onClick={handleLogout}
-                disabled={loggingOut}
-            >
-                {loggingOut ? "Logging out..." : "Logout"}
-            </Button>
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-card/50 p-4">
+                <p className="text-lg font-semibold text-foreground">{welcomeText}</p>
+
+                <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                >
+                    {loggingOut ? "Logging out..." : "Logout"}
+                </Button>
+            </div>
+            {/* Only show the uploader if the user is loaded */}
+            {user && <ImageUploader />}
         </div>
     );
 }
