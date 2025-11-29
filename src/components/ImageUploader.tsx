@@ -11,9 +11,10 @@ type Props = {
     mode: "add" | "manage";
     productId?: number;
     artisanId?: number;
+    refreshTrigger?: number; // Add this prop to trigger refresh
 };
 
-export default function ImageUploader({ mode, productId, artisanId }: Props) {
+export default function ImageUploader({ mode, productId, artisanId, refreshTrigger }: Props) {
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProductId, setSelectedProductId] = useState<number | undefined>(productId);
     const [images, setImages] = useState<ProductImage[]>([]);
@@ -35,14 +36,21 @@ export default function ImageUploader({ mode, productId, artisanId }: Props) {
                 const prodArray: Product[] = data.products ?? [];
                 setProducts(prodArray);
 
-                if (!selectedProductId && prodArray.length > 0) {
+                // If we have a selectedProductId, make sure it's still in the list
+                // If not, select the first product or the newly added one
+                if (selectedProductId && !prodArray.find(p => p.id === selectedProductId)) {
+                    // Product was removed or list was refreshed, select first or keep selection
+                    if (prodArray.length > 0) {
+                        setSelectedProductId(prodArray[0].id);
+                    }
+                } else if (!selectedProductId && prodArray.length > 0) {
                     setSelectedProductId(prodArray[0].id);
                 }
             } catch (err) {
                 console.error("Error fetching products:", err);
             }
         })();
-    }, [mode, artisanId, selectedProductId]);
+    }, [mode, artisanId, refreshTrigger, selectedProductId]); // Add selectedProductId to dependencies
 
     // ───────────────
     // Load images when a product is selected
