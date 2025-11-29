@@ -20,15 +20,15 @@ cloudinary.config({
 
 export const runtime = "nodejs";
 
-// POST /api/products/[id]/images
+// POST /api/products/[productId]/images
 export async function POST(
     req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ productId: string }> }
 ) {
     try {
-        const { id } = await params;
-        const productId = Number(id);
-        if (!Number.isInteger(productId) || productId <= 0) {
+        const { productId } = await params;
+        const numericProductId = Number(productId);
+        if (!Number.isInteger(numericProductId) || numericProductId <= 0) {
             return NextResponse.json(
                 { error: "Invalid product ID" },
                 { status: 400 }
@@ -39,13 +39,13 @@ export async function POST(
         const existingProduct = await sql`
         SELECT id
         FROM products
-        WHERE id = ${productId}
+        WHERE id = ${numericProductId}
         LIMIT 1
         `;
         if (!existingProduct.length) {
             return NextResponse.json(
                 {
-                    error: `Product ${productId} does not exist. Create the product before uploading images.`,
+                    error: `Product ${numericProductId} does not exist. Create the product before uploading images.`,
                 },
                 { status: 404 }
             );
@@ -83,7 +83,7 @@ export async function POST(
         // Insert image URL into product_images table
         await sql`
         INSERT INTO product_images (product_id, image_url)
-        VALUES (${productId}, ${uploadResult.secure_url})
+        VALUES (${numericProductId}, ${uploadResult.secure_url})
         `;
 
         return NextResponse.json({
@@ -99,17 +99,15 @@ export async function POST(
     }
 }
 
-
 // API route to fetch images for a product
-
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ productId: string }> }
 ) {
     try {
-        const { id } = await params;
-        const productId = Number(id);
-        if (!Number.isInteger(productId) || productId <= 0) {
+        const { productId } = await params;
+        const numericProductId = Number(productId);
+        if (!Number.isInteger(numericProductId) || numericProductId <= 0) {
             return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
         }
 
@@ -119,7 +117,7 @@ export async function GET(
                 is_primary,
                 created_at
                 FROM product_images
-                WHERE product_id = ${productId}
+                WHERE product_id = ${numericProductId}
                 ORDER BY created_at DESC`;
         return NextResponse.json({ images: rows });
 

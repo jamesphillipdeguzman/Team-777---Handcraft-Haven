@@ -1,193 +1,226 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Button } from '@/components/ui/button';
 
+type Product = { id: number; name: string };
+type ProductImage = { id: number; image_url: string; isPrimary: boolean };
 
-export default function ImageUploader() {
-    const [products, setProducts] = useState<Array<{ id: number; name: string }>>([]);
-    const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-    const [images, setImages] = useState<Array<{ id: number; image_url: string }>>([]);
-    const [preview, setPreview] = useState<string | null>(null);
-    const [file, setFile] = useState<File | null>(null);
-    const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+type Props = {
+    mode: "add" | "manage";
+    productId?: number;
+    artisanId?: number;
+    refreshTrigger?: number; // Add this prop to trigger refresh
+};
+
+export default function ImageUploader({ mode, productId, artisanId, refreshTrigger }: Props) {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [selectedProductId, setSelectedProductId] = useState<number | undefined>(productId);
+    const [images, setImages] = useState<ProductImage[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    // ───────────────
+    // Load products for manage mode
+    // ───────────────
     useEffect(() => {
-        async function loadProducts() {
-            try {
-                const res = await fetch("/api/products");
+        if (mode !== "manage" || !artisanId) return;
 
-                if (!res.ok) {
-                    const text = await res.text();
-                    console.error("API ERROR:", text);
-                    return;
-                }
+        (async () => {
+            try {
+                const res = await fetch(`/api/products/by-artisan/${artisanId}`);
+                if (!res.ok) throw new Error("Failed to fetch products");
+
                 const data = await res.json();
-                if (res.ok) {
-                    setProducts(data.products);
+                const prodArray: Product[] = data.products ?? [];
+                setProducts(prodArray);
+
+                // If we have a selectedProductId, make sure it's still in the list
+                // If not, select the first product or the newly added one
+                if (selectedProductId && !prodArray.find(p => p.id === selectedProductId)) {
+                    // Product was removed or list was refreshed, select first or keep selection
+                    if (prodArray.length > 0) {
+                        setSelectedProductId(prodArray[0].id);
+                    }
+                } else if (!selectedProductId && prodArray.length > 0) {
+                    setSelectedProductId(prodArray[0].id);
                 }
             } catch (err) {
-                console.error("Failed to load products:", err);
+                console.error("Error fetching products:", err);
             }
-        }
-        loadProducts();
-    }, []);
+        })();
+    }, [mode, artisanId, refreshTrigger, selectedProductId]); // Add selectedProductId to dependencies
 
-
-    // Load product images when productId changes
+    // ───────────────
+    // Load images when a product is selected
+    // ───────────────
     useEffect(() => {
         if (!selectedProductId) return;
 
-        async function loadImages() {
+        (async () => {
             try {
-                const response = await fetch(`/api/products/${selectedProductId}/images`);
-                const data = await response.json();
-                if (response.ok) {
-                    setImages(data.images);
-                }
-            } catch (err) {
-                console.error("Failed to load images:", err);
+                const res = await fetch(`/api/product-images/${selectedProductId}`);
+                if (!res.ok) throw new Error("Failed to fetch images");
 
+                const data = await res.json();
+                const validImages: ProductImage[] = (data.images ?? []).filter(
+                    (img: unknown): img is ProductImage =>
+                        typeof img === "object" && img !== null && "image_url" in img
+                );
+
+                setImages(validImages);
+            } catch (err) {
+                console.error("Error fetching images:", err);
+                setImages([]);
             }
-        }
-        loadImages();
+        })();
     }, [selectedProductId]);
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const selectedFile = e.target.files?.[0];
-        if (!selectedFile) return;
-
-        const objectUrl = URL.createObjectURL(selectedFile);
-        setFile(selectedFile);
-        setPreview(objectUrl);
-        setStatus(null);
-    }
-
-    // Clean up the object URL to avoid memory leaks
-    useEffect(() => {
-        return () => {
-            if (preview) URL.revokeObjectURL(preview);
-        };
-    }, [preview]);
-
-    async function handleUpload() {
-        if (!file) {
-            setStatus({ type: 'error', message: 'Please choose an image first.' });
-            return;
-        }
-
-        if (!selectedProductId) {
-            setStatus({ type: 'error', message: 'No product selected.' });
-            return;
-        }
-
-        const form = new FormData();
-        form.append('file', file);
+    // ───────────────
+    // Upload image
+    // ───────────────
+    const handleUpload = async () => {
+        if (!selectedFile || !selectedProductId) return;
 
         setUploading(true);
-        setStatus(null);
 
         try {
-            const response = await fetch(`/api/products/${selectedProductId}/images`, {
-                method: 'POST',
-                body: form,
+            const formData = new FormData();
+            formData.append("image", selectedFile);
+
+            const res = await fetch(`/api/product-images/${selectedProductId}/upload`, {
+                method: "POST",
+                body: formData,
             });
 
-            const data = await response.json();
-            if (response.ok) {
-                setStatus({ type: 'success', message: 'Image uploaded successfully!' });
-                setPreview(null);
-                setFile(null);
-
-                // Refresh the images list
-                const updatedImagesResponse = await fetch(`/api/products/${selectedProductId}/images`);
-                const updatedImagesData = await updatedImagesResponse.json();
-                if (updatedImagesResponse.ok) {
-                    setImages(updatedImagesData.images);
-                }
-
-            } else {
-                setStatus({ type: 'error', message: data?.error || 'Upload failed.' });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Upload failed: ${errorText}`);
             }
+
+            const data = await res.json();
+            if (data.image?.image_url) setImages(prev => [...prev, data.image]);
+            else console.warn("No image URL returned:", data);
+
+            setSelectedFile(null);
         } catch (err) {
-            console.error('Upload error:', err);
-            setStatus({ type: 'error', message: 'Upload failed due to network or server error.' });
+            console.error("Upload error:", err);
+            alert("Image upload failed. See console for details.");
         } finally {
             setUploading(false);
         }
-    }
+    };
+
+    // ───────────────
+    // Set primary image
+    // ───────────────
+    const setPrimary = async (id: number) => {
+        try {
+            const res = await fetch(`/api/product-images/by-image/${id}/primary`, { method: "PATCH" });
+            if (!res.ok) throw new Error("Failed to set primary");
+            setImages(prev => prev.map(img => ({ ...img, isPrimary: img.id === id })));
+        } catch (err) {
+            console.error("Error setting primary image:", err);
+        }
+    };
+
+    // ───────────────
+    // Delete image
+    // ───────────────
+    const deleteImage = async (id: number) => {
+        try {
+            const res = await fetch(`/api/product-images/by-image/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete image");
+            setImages(prev => prev.filter(img => img.id !== id));
+        } catch (err) {
+            console.error("Error deleting image:", err);
+        }
+    };
 
     return (
-        <div className="flex flex-col gap-3 max-w-sm rounded-lg border border-border bg-card/60 p-4">
-            {/* PRODUCT DROPDOWN */}
-            <label htmlFor="product" className="text-sm font-medium">
-                Select Product:
+        <div className="p-4 border rounded-xl bg-white">
+            <h2 className="font-bold mb-2">Product Images</h2>
 
+            {/* Manage mode dropdown */}
+            {mode === "manage" && products.length > 0 && (
                 <select
-                    className="w-full border border-gray-300 p-2 rounded"
-                    value={selectedProductId ?? ''}
-                    onChange={(e) => setSelectedProductId(Number(e.target.value) || null)}
+                    value={selectedProductId}
+                    onChange={e => setSelectedProductId(Number(e.target.value))}
+                    className="border rounded p-2 mb-3 w-full"
                 >
-                    <option value="">-- Select a product --</option>
-                    {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                            {product.name}
+                    {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                            {p.name}
                         </option>
                     ))}
                 </select>
-
-            </label>
-            {/* FILE SELECT */}
-            <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full text-sm cursor-pointer border border-gray-300 p-2"
-            />
-
-            {preview && (
-                <Image
-                    src={preview}
-                    alt="preview"
-                    width={200}
-                    height={200}
-                    className="h-48 w-full rounded object-cover"
-                />
             )}
 
-            {/* UPLOAD BUTTON */}
-
-            <button
-                type="button"
-                onClick={handleUpload}
-                disabled={uploading}
-                className="px-4 py-2 bg-blue-600 text-white rounded w-max disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-                {uploading ? 'Uploading...' : 'Upload'}
-            </button>
-
-            {status && (
-                <p className={`text-sm ${status.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                    {status.message}
-                </p>
+            {mode === "manage" && products.length === 0 && (
+                <p className="text-sm text-gray-500 mb-2">No products found for this artisan.</p>
             )}
 
-            {/* IMAGES GALLERY */}
-            {images.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                    {images.map((img) => (
-                        <div key={img.id} className="border border-gray-300 rounded overflow-hidden">
+            {/* Improved Upload UI */}
+            {selectedProductId ? (
+                <div className="flex items-center gap-3 mb-4">
+                    <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                        {selectedFile ? "Change File" : "Choose File"}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+                            className="hidden"
+                        />
+                    </label>
+
+                    {selectedFile && <span className="text-gray-700">{selectedFile.name}</span>}
+
+                    <Button onClick={handleUpload} disabled={!selectedFile || uploading}>
+                        {uploading ? "Uploading..." : "Upload"}
+                    </Button>
+                </div>
+            ) : (
+                <p className="text-sm text-gray-500 mb-4">Select a product first to upload images.</p>
+            )}
+
+            {/* Image grid */}
+            {images.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {images.map(img => (
+                        <div key={img.id} className="w-full aspect-square relative rounded overflow-hidden border">
                             <Image
                                 src={img.image_url}
-                                alt={`Product Image ${img.id}`}
-                                width={200}
-                                height={200}
-                                className="h-32 w-full object-cover"
+                                alt="Product Image"
+                                fill
+                                style={{ objectFit: "cover" }}
                             />
+                            <div className="absolute bottom-2 left-2 flex flex-col gap-1">
+                                {!img.isPrimary && (
+                                    <button
+                                        onClick={() => setPrimary(img.id)}
+                                        className="bg-blue-500 text-white text-xs py-1 px-2 rounded"
+                                    >
+                                        Set Primary
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => deleteImage(img.id)}
+                                    className="bg-red-500 text-white text-xs py-1 px-2 rounded"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                            {img.isPrimary && (
+                                <p className="absolute top-1 right-1 text-xs text-green-600 font-semibold bg-white/70 px-1 rounded">
+                                    Primary
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>
+            ) : (
+                <p className="text-sm text-gray-500">No images uploaded yet.</p>
             )}
         </div>
     );
