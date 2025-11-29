@@ -20,14 +20,13 @@ cloudinary.config({
 
 export const runtime = "nodejs";
 
-// POST /api/products/[id]/images
+// POST /api/products/[productId]/images
 export async function POST(
     req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: { productId: string } }
 ) {
     try {
-        const { id } = await params;
-        const productId = Number(id);
+        const productId = Number(params.productId);
         if (!Number.isInteger(productId) || productId <= 0) {
             return NextResponse.json(
                 { error: "Invalid product ID" },
@@ -99,16 +98,13 @@ export async function POST(
     }
 }
 
-
 // API route to fetch images for a product
-
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: { productId: string } }
 ) {
     try {
-        const { id } = await params;
-        const productId = Number(id);
+        const productId = Number(params.productId);
         if (!Number.isInteger(productId) || productId <= 0) {
             return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
         }

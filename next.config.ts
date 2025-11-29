@@ -19,7 +19,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
         port: '',
-        pathname: '/**',  // allow all paths
+        //pathname: '/**',  // allow all paths
+        pathname: '/dego6hgcb/image/upload/**',
       },
     ],
   },
