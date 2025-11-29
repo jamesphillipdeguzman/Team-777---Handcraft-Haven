@@ -36,3 +36,50 @@ export async function GET() {
 }
 
 // Additional methods (POST, DELETE, etc.) can be added here as needed.
+
+export async function POST(request: Request) {
+    const formData = await request.formData();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const price = formData.get('price') as string;
+    const images = formData.getAll('images') as File[];
+    if (!name || !description || !price || images.length === 0) {
+        return NextResponse.json(
+            { error: 'Missing required fields' },
+            { status: 400 }
+        );
+    }
+    try {
+        const result = await sql`
+            INSERT INTO products (name, description, price)
+            VALUES (${name}, ${description}, ${price})
+            RETURNING id
+        `;
+        const productId = result[0].id;
+        for (const image of images) {
+            // Read the image as a buffer
+            const arrayBuffer = await image.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            // Convert buffer to base64 and create a data URI
+            const mimeType = image.type || 'application/octet-stream';
+            const base64 = buffer.toString('base64');
+            const dataUri = `data:${mimeType};base64,${base64}`;
+
+            const uploadResult = await cloudinary.uploader.upload(dataUri, {
+                folder: 'product_images',
+            });
+            await sql`
+                INSERT INTO product_images (product_id, image_url)
+                VALUES (${productId}, ${uploadResult.secure_url})
+            `;
+        }
+        return NextResponse.json({ success: true, productId });
+    } catch (error) {
+        console.error('Failed to add product:', error);
+        return NextResponse.json(
+            { error: 'Failed to add product' },
+            { status: 500 }
+        );
+    }
+}
