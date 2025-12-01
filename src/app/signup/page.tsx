@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 export default function SignupPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [role, setRole] = useState<"user" | "artisan">("user");
+    const [name, setName] = useState("");
+    const [bio, setBio] = useState("");
 
     const router = useRouter();
 
@@ -15,17 +18,23 @@ export default function SignupPage() {
         const res = await fetch("/api/auth/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({
+                email,
+                password,
+                role,
+                name: role === "artisan" ? name : null,
+                bio: role === "artisan" ? bio : null,
+            }),
         });
 
-const data = await res.json();
+        const data = await res.json();
 
-if (res.ok) {
-    alert(data.message || "Account created successfully!");
-    router.push("/login");
-} else {
-    alert(data.error || "Signup failed. Please try again.");
-}
+        if (res.ok) {
+            alert(data.message || "Account created successfully!");
+            router.push("/login");
+        } else {
+            alert(data.error || "Signup failed. Please try again.");
+        }
     }
 
     return (
@@ -35,6 +44,18 @@ if (res.ok) {
                 className="bg-card p-8 rounded-lg shadow-md w-full max-w-sm flex flex-col gap-4">
                 <h1 className="text-2xl font-heading text-foreground text-center">Sign Up</h1>
 
+                {/* Role Selector */}
+                <select
+                    value={role}
+                    onChange={e => setRole(e.target.value as "user" | "artisan")}
+                    className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                    <option value="user">User</option>
+                    <option value="artisan">Artisan</option>
+                </select>
+
+
+                {/* Email */}
                 <input
                     type="email"
                     placeholder="Email"
@@ -43,6 +64,8 @@ if (res.ok) {
                     className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
                     required
                 />
+
+                {/* Password */}
                 <input
                     type="password"
                     placeholder="Password"
@@ -51,6 +74,28 @@ if (res.ok) {
                     className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
                     required
                 />
+
+                {/* Artisan fields only appear if role = artisan */}
+                {role === "artisan" && (
+                    <>
+                        <input
+                            type="text"
+                            placeholder="Name"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                            required
+                        />
+                        <textarea
+                            placeholder="Bio"
+                            value={bio}
+                            onChange={e => setBio(e.target.value)}
+                            className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                            required
+                        />
+                    </>
+                )}
+
                 <button
                     type="submit"
                     className="bg-primary text-primary-foreground p-2 rounded hover:bg-primary-foreground hover:text-primary transition-colors"

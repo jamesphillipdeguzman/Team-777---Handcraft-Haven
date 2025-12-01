@@ -48,6 +48,7 @@ export default function AddProductForm({ artisanId, onSaved }: Props) {
             if (res.ok && data?.product) {
                 alert('Product added successfully!');
                 onSaved(data.product); // pass full product
+                window.location.reload(); // Reload to reflect new product in ImageUploader
 
                 // reset form
                 setName('');

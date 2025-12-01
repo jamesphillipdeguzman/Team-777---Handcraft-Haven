@@ -5,13 +5,18 @@ import Image from "next/image";
 import { Button } from '@/components/ui/button';
 
 type Product = { id: number; name: string };
-type ProductImage = { id: number; image_url: string; isPrimary: boolean };
+
+type ProductImage = {
+    id: number;
+    image_url: string;
+    is_primary: boolean;
+};
 
 type Props = {
     mode: "add" | "manage";
     productId?: number;
     artisanId?: number;
-    refreshTrigger?: number; // Add this prop to trigger refresh
+    refreshTrigger?: number;
 };
 
 export default function ImageUploader({ mode, productId, artisanId, refreshTrigger }: Props) {
@@ -20,66 +25,74 @@ export default function ImageUploader({ mode, productId, artisanId, refreshTrigg
     const [images, setImages] = useState<ProductImage[]>([]);
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [primaryImage, setPrimaryImage] = useState<ProductImage | null>(null);
 
-    // ───────────────
-    // Load products for manage mode
-    // ───────────────
+    // ──────────────────────────────
+    // Handle Product Saved (Add Mode)
+    // ──────────────────────────────
+
+    const handleProductSaved = (newProduct: Product) => {
+        // Select the newly added product in ImageUploader
+        setSelectedProductId(newProduct.id);
+    }
+
+    // ──────────────────────────────
+    // Load products (Manage Mode)
+    // ──────────────────────────────
     useEffect(() => {
         if (mode !== "manage" || !artisanId) return;
 
-        (async () => {
+        async function loadProducts() {
             try {
                 const res = await fetch(`/api/products/by-artisan/${artisanId}`);
                 if (!res.ok) throw new Error("Failed to fetch products");
 
                 const data = await res.json();
-                const prodArray: Product[] = data.products ?? [];
+                const prodArray = data.products ?? [];
                 setProducts(prodArray);
 
-                // If we have a selectedProductId, make sure it's still in the list
-                // If not, select the first product or the newly added one
-                if (selectedProductId && !prodArray.find(p => p.id === selectedProductId)) {
-                    // Product was removed or list was refreshed, select first or keep selection
-                    if (prodArray.length > 0) {
-                        setSelectedProductId(prodArray[0].id);
-                    }
-                } else if (!selectedProductId && prodArray.length > 0) {
+                // Default selection
+                if (!selectedProductId && prodArray.length > 0) {
                     setSelectedProductId(prodArray[0].id);
                 }
             } catch (err) {
                 console.error("Error fetching products:", err);
             }
-        })();
-    }, [mode, artisanId, refreshTrigger, selectedProductId]); // Add selectedProductId to dependencies
+        }
 
-    // ───────────────
-    // Load images when a product is selected
-    // ───────────────
+        loadProducts();
+    }, [mode, artisanId, selectedProductId, refreshTrigger]);
+
+    // ──────────────────────────────
+    // Load images for selected product
+    // ──────────────────────────────
     useEffect(() => {
         if (!selectedProductId) return;
 
-        (async () => {
+        async function loadImages() {
             try {
                 const res = await fetch(`/api/product-images/${selectedProductId}`);
-                if (!res.ok) throw new Error("Failed to fetch images");
-
                 const data = await res.json();
-                const validImages: ProductImage[] = (data.images ?? []).filter(
-                    (img: unknown): img is ProductImage =>
-                        typeof img === "object" && img !== null && "image_url" in img
-                );
 
-                setImages(validImages);
+                const imgs = (data.images ?? []) as ProductImage[];
+
+                setImages(imgs);
+
+                const primary = imgs.find(img => img.is_primary) || null;
+                setPrimaryImage(primary);
             } catch (err) {
                 console.error("Error fetching images:", err);
                 setImages([]);
+                setPrimaryImage(null);
             }
-        })();
-    }, [selectedProductId]);
+        }
 
-    // ───────────────
-    // Upload image
-    // ───────────────
+        loadImages();
+    }, [selectedProductId, refreshTrigger]);
+
+    // ──────────────────────────────
+    // Upload Image
+    // ──────────────────────────────
     const handleUpload = async () => {
         if (!selectedFile || !selectedProductId) return;
 
@@ -94,75 +107,94 @@ export default function ImageUploader({ mode, productId, artisanId, refreshTrigg
                 body: formData,
             });
 
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Upload failed: ${errorText}`);
-            }
+            if (!res.ok) throw new Error(await res.text());
 
             const data = await res.json();
-            if (data.image?.image_url) setImages(prev => [...prev, data.image]);
-            else console.warn("No image URL returned:", data);
+
+            if (data.image) {
+                setImages(prev => [...prev, data.image]);
+            }
 
             setSelectedFile(null);
         } catch (err) {
             console.error("Upload error:", err);
-            alert("Image upload failed. See console for details.");
+            alert("Image upload failed.");
         } finally {
             setUploading(false);
         }
     };
 
-    // ───────────────
-    // Set primary image
-    // ───────────────
+    // ──────────────────────────────
+    // Set Primary Image
+    // ──────────────────────────────
     const setPrimary = async (id: number) => {
         try {
-            const res = await fetch(`/api/product-images/by-image/${id}/primary`, { method: "PATCH" });
-            if (!res.ok) throw new Error("Failed to set primary");
-            setImages(prev => prev.map(img => ({ ...img, isPrimary: img.id === id })));
+            const res = await fetch(`/api/product-images/by-image/${id}/primary`, {
+                method: "PATCH",
+            });
+
+            if (!res.ok) throw new Error("Failed to set primary image");
+
+            setImages(prev =>
+                prev.map(img => ({
+                    ...img,
+                    is_primary: img.id === id,
+                }))
+            );
         } catch (err) {
             console.error("Error setting primary image:", err);
         }
     };
 
-    // ───────────────
-    // Delete image
-    // ───────────────
+    // ──────────────────────────────
+    // Delete Image
+    // ──────────────────────────────
     const deleteImage = async (id: number) => {
         try {
-            const res = await fetch(`/api/product-images/by-image/${id}`, { method: "DELETE" });
+            const res = await fetch(`/api/product-images/by-image/${id}`, {
+                method: "DELETE",
+            });
+
             if (!res.ok) throw new Error("Failed to delete image");
+
             setImages(prev => prev.filter(img => img.id !== id));
         } catch (err) {
             console.error("Error deleting image:", err);
         }
     };
 
+    // ──────────────────────────────
+    // Render
+    // ──────────────────────────────
     return (
         <div className="p-4 border rounded-xl bg-white">
             <h2 className="font-bold mb-2">Product Images</h2>
 
-            {/* Manage mode dropdown */}
-            {mode === "manage" && products.length > 0 && (
-                <select
-                    value={selectedProductId}
-                    onChange={e => setSelectedProductId(Number(e.target.value))}
-                    className="border rounded p-2 mb-3 w-full"
-                >
-                    {products.map(p => (
-                        <option key={p.id} value={p.id}>
-                            {p.name}
-                        </option>
-                    ))}
-                </select>
+            {/* Product selection */}
+            {mode === "manage" && (
+                <>
+                    {products.length > 0 ? (
+                        <select
+                            value={selectedProductId}
+                            onChange={e => setSelectedProductId(Number(e.target.value))}
+                            className="border rounded p-2 mb-3 w-full"
+                        >
+                            {products.map(p => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <p className="text-gray-500 text-sm mb-3">
+                            No products found for this artisan.
+                        </p>
+                    )}
+                </>
             )}
 
-            {mode === "manage" && products.length === 0 && (
-                <p className="text-sm text-gray-500 mb-2">No products found for this artisan.</p>
-            )}
-
-            {/* Improved Upload UI */}
-            {selectedProductId ? (
+            {/* Upload */}
+            {selectedProductId && (
                 <div className="flex items-center gap-3 mb-4">
                     <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
                         {selectedFile ? "Change File" : "Choose File"}
@@ -180,23 +212,31 @@ export default function ImageUploader({ mode, productId, artisanId, refreshTrigg
                         {uploading ? "Uploading..." : "Upload"}
                     </Button>
                 </div>
-            ) : (
-                <p className="text-sm text-gray-500 mb-4">Select a product first to upload images.</p>
             )}
 
-            {/* Image grid */}
+            {/* Primary Image Display */}
+            {primaryImage && (
+                <div className="mb-4">
+                    <h3 className="font-semibold">Primary Image</h3>
+                    <Image
+                        src={primaryImage.image_url}
+                        alt="Primary"
+                        width={192}
+                        height={192}
+                        className="w-48 rounded border-4 border-green-500 object-cover"
+                    />
+                </div>
+            )}
+
+            {/* Image Grid */}
             {images.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {images.map(img => (
-                        <div key={img.id} className="w-full aspect-square relative rounded overflow-hidden border">
-                            <Image
-                                src={img.image_url}
-                                alt="Product Image"
-                                fill
-                                style={{ objectFit: "cover" }}
-                            />
+                        <div key={img.id} className="relative w-full aspect-square border rounded overflow-hidden">
+                            <Image src={img.image_url} alt="" fill className="object-cover" />
+
                             <div className="absolute bottom-2 left-2 flex flex-col gap-1">
-                                {!img.isPrimary && (
+                                {!img.is_primary && (
                                     <button
                                         onClick={() => setPrimary(img.id)}
                                         className="bg-blue-500 text-white text-xs py-1 px-2 rounded"
@@ -211,16 +251,17 @@ export default function ImageUploader({ mode, productId, artisanId, refreshTrigg
                                     Delete
                                 </button>
                             </div>
-                            {img.isPrimary && (
-                                <p className="absolute top-1 right-1 text-xs text-green-600 font-semibold bg-white/70 px-1 rounded">
+
+                            {img.is_primary && (
+                                <span className="absolute top-1 right-1 text-xs bg-white/75 text-green-700 px-2 py-1 rounded">
                                     Primary
-                                </p>
+                                </span>
                             )}
                         </div>
                     ))}
                 </div>
             ) : (
-                <p className="text-sm text-gray-500">No images uploaded yet.</p>
+                <p className="text-gray-500 text-sm">No images uploaded yet.</p>
             )}
         </div>
     );
