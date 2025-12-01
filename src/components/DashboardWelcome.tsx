@@ -15,6 +15,8 @@ type Product = {
     artisan_id: number;
 };
 
+
+
 export default function DashboardWelcome() {
     const [user, setUser] = useState<User | null>(null);
     const [artisanId, setArtisanId] = useState<number | null>(null);
@@ -54,6 +56,8 @@ export default function DashboardWelcome() {
         return () => { isMounted = false; };
     }, []);
 
+
+
     const handleLogout = async () => {
         try {
             setLoggingOut(true);
@@ -68,6 +72,7 @@ export default function DashboardWelcome() {
 
     const username = user?.email?.split('@')[0];
     const welcomeText = loading ? 'Loading user...' : user ? `Welcome, ${username}!` : 'Welcome!';
+
 
     return (
         <div className="max-w-5xl mx-auto p-6 flex flex-col gap-6">

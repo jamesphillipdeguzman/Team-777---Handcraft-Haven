@@ -5,14 +5,24 @@ import { signToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
+        const { email, password, role, name, bio } = await req.json();
 
         if (!email || !password) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
         }
 
+        // If artisan name is required
+        if (role === "artisan" && !name) {
+            return NextResponse.json({ error: "Name is required for artisans" }, { status: 400 });
+        }
+
         // Check if user already exists
-        const rowsExistingUser = await sql`SELECT id FROM users WHERE email=${email}`;
+        const rowsExistingUser = await sql`
+            SELECT id 
+            FROM users 
+            WHERE email=${email}
+        `;
+
         const existingUser = rowsExistingUser[0];
 
         if (existingUser) {
@@ -22,7 +32,19 @@ export async function POST(req: NextRequest) {
         const hashedPassword = await hashPassword(password);
 
         // Insert new user into the database
-        const [newUser] = await sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${hashedPassword}) RETURNING id, email`;
+        const [newUser] = await sql`
+            INSERT INTO users (email, password_hash) 
+            VALUES (${email}, ${hashedPassword}) 
+            RETURNING id, email
+        `;
+
+        // If role is artisan, insert into artisans table
+        if (role === "artisan") {
+            await sql`
+                INSERT INTO artisans (user_id, name, email, bio)
+                VALUES (${newUser.id}, ${name}, ${email}, ${bio ?? null})
+            `;
+        }
 
         // Optionally, create a JWT token for the new user
         const token = signToken({ userId: newUser.id, email: newUser.email });
