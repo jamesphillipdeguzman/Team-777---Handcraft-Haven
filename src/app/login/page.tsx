@@ -29,7 +29,7 @@ export default function LoginPage() {
         // Cookie is already set by the server as HttpOnly
         // No need to set it client-side
         alert(data?.message || "Login successful!");
-        router.replace("/dashboard");
+        router.replace("/account");
     }
 
     return (
