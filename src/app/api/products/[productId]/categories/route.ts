@@ -3,10 +3,11 @@ import { sql } from '@/lib/db';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { productId: string } }
+    { params }: { params: Promise<{ productId: string }> }
 ) {
     try {
-        const productId = Number(params.productId);
+        const { productId: productIdParam } = await params;
+        const productId = Number(productIdParam);
         const body = await request.json();
         const { categoryIds } = body;
 
