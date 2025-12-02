@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true, // recommended for catching React issues
-
+  productionBrowserSourceMaps: false, // disable source maps in production for security/performance
   compiler: {
     // optional: if you later use styled-components or similar
     styledComponents: true,
