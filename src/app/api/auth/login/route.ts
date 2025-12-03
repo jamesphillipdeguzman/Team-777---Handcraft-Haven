@@ -23,9 +23,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
-        const token = signToken({ userId: user.id, email: user.email });
+        const [artisan] = await sql`
+            SELECT user_id
+            FROM artisans
+            WHERE user_id = ${user.id}
+        `;
 
-        const response = NextResponse.json({ message: "Login successful" });
+        const role = artisan ? "artisan" : "user";
+
+        const token = signToken({ userId: user.id, email: user.email, role });
+
+        const response = NextResponse.json({ message: "Login successful", role });
+
         response.cookies.set("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",

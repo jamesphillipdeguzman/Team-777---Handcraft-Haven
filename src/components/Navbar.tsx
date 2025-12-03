@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
+import { useWishlist } from "@/context/wishlistContext";
 
 export function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const { wishlist } = useWishlist();
 
   useEffect(() => {
     fetch("/api/auth/status")
-      .then(res => res.json())
-      .then(data => setLoggedIn(data.loggedIn));
+      .then((res) => res.json())
+      .then((data) => setLoggedIn(data.loggedIn));
   }, []);
-
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -23,6 +24,15 @@ export function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+    }
+  };
+
+  const handleAccountClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (loggedIn) {
+      window.location.href = "/account";
+    } else {
+      window.location.href = "/login";
     }
   };
 
@@ -86,7 +96,6 @@ export function Navbar() {
                   <span>Login</span>
                 </Link>
               </Button>
-
             )}
             <Button variant="ghost" size="icon" asChild>
               <Link href="/wishlist">
@@ -100,11 +109,13 @@ export function Navbar() {
                 <span className="sr-only">Cart</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/account">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Account</span>
-              </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleAccountClick}
+            >
+              <User className="h-5 w-5" />
+              <span className="sr-only">Account</span>
             </Button>
           </div>
 
@@ -143,7 +154,10 @@ export function Navbar() {
                   Products
                 </Link>
                 {loggedIn === false && (
-                  <Link href="/login" className="text-sm font-medium transition-colors hover:text-primary">
+                  <Link
+                    href="/login"
+                    className="text-sm font-medium transition-colors hover:text-primary"
+                  >
                     Login
                   </Link>
                 )}
@@ -153,18 +167,20 @@ export function Navbar() {
                 >
                   Wishlist
                 </Link>
+
                 <Link
                   href="/cart"
                   className="text-sm font-medium transition-colors hover:text-primary"
                 >
                   Cart
                 </Link>
-                <Link
-                  href="/account"
-                  className="text-sm font-medium transition-colors hover:text-primary"
+                <Button
+                  variant="ghost"
+                  className="text-left p-0"
+                  onClick={handleAccountClick}
                 >
                   Account
-                </Link>
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>
