@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
+import { useWishlist } from "@/context/wishlistContext";
 
 export function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const { wishlist } = useWishlist();
 
   useEffect(() => {
     fetch("/api/auth/status")
@@ -165,6 +167,7 @@ export function Navbar() {
                 >
                   Wishlist
                 </Link>
+
                 <Link
                   href="/cart"
                   className="text-sm font-medium transition-colors hover:text-primary"

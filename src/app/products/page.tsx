@@ -1,7 +1,12 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { getProducts} from "@/lib/products";  
+import ProductsGrid from "./productsGrid";
 
-export default function ProductsPage() {
+
+
+export default async function ProductsPage() {
+  const products = await getProducts();
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -12,9 +17,14 @@ export default function ProductsPage() {
             Browse our collection of handcrafted items.
           </p>
           {/* TODO: Add product grid/list here */}
+        
+            <ProductsGrid products={products} />
+
         </div>
       </main>
       <Footer />
     </div>
   );
 }
+
+
