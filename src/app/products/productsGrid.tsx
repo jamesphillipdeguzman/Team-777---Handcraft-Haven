@@ -2,15 +2,7 @@
 
 import { useWishlist } from "@/context/wishlistContext";
 import Image from "next/image";
-
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  image_url?: string;
-  category?: string;
-};
+import type { Product } from "@/lib/products";
 
 export default function ProductsGrid({ products }: { products: Product[] }) {
   const { addToWishlist } = useWishlist();
@@ -34,7 +26,14 @@ export default function ProductsGrid({ products }: { products: Product[] }) {
             <p className="text-sm text-gray-700 mt-2">{p.description}</p>
             <button
               onClick={() => {
-                addToWishlist(p)
+                addToWishlist({
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  price: p.price,
+                  image_url: p.image_url || undefined,
+                  category: p.category || undefined,
+                });
                 alert("Product added to wishlist!");
 
               }}

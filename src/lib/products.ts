@@ -1,6 +1,15 @@
 import { sql } from "./db";
 
-export async function getProducts() {
+export type Product = {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+  image_url: string | null;
+  category: string | null;
+};
+
+export async function getProducts(): Promise<Product[]> {
   const result = await sql`
     SELECT 
       p.id,
@@ -19,7 +28,7 @@ export async function getProducts() {
     FROM products p
     ORDER BY p.id
   `;
-  return result;
+  return result as Product[];
 }
 
 
