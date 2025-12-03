@@ -7,12 +7,17 @@ export async function getProducts() {
       p.name,
       p.price,
       p.description,
-      pi.image_url,
-      c.name AS category
+      COALESCE(
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1),
+        (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY created_at ASC LIMIT 1),
+        NULL
+      ) AS image_url,
+      (SELECT c.name FROM product_categories pc 
+       JOIN categories c ON c.id = pc.category_id 
+       WHERE pc.product_id = p.id 
+       LIMIT 1) AS category
     FROM products p
-    LEFT JOIN product_images pi ON pi.product_id = p.id
-    LEFT JOIN product_categories pc ON pc.product_id = p.id
-    LEFT JOIN categories c ON c.id = pc.category_id
+    ORDER BY p.id
   `;
   return result;
 }
