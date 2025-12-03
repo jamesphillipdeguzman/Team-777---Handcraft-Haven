@@ -17,14 +17,86 @@ cloudinary.config({
 });
 export const runtime = 'nodejs';
 
-// GET /api/products
-export async function GET() {
+// GET /api/products - Get all products with optional filtering
+export async function GET(request: Request) {
     try {
-        const products = await sql`
-            SELECT id, name
-            FROM products
-            ORDER BY name
-        `;
+        const { searchParams } = new URL(request.url);
+        const categoryId = searchParams.get('category');
+        const search = searchParams.get('search');
+        const sort = searchParams.get('sort') || 'newest';
+
+        // Build the base query with product info, primary image, and artisan
+        let products;
+
+        if (categoryId) {
+            products = await sql`
+                SELECT DISTINCT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.created_at,
+                    a.name as artisan_name,
+                    (
+                        SELECT image_url FROM product_images pi
+                        WHERE pi.product_id = p.id
+                        ORDER BY pi.is_primary DESC, pi.created_at ASC
+                        LIMIT 1
+                    ) as image_url
+                FROM products p
+                LEFT JOIN artisans a ON p.artisan_id = a.id
+                JOIN product_categories pc ON p.id = pc.product_id
+                WHERE pc.category_id = ${Number(categoryId)}
+                ORDER BY p.created_at DESC
+            `;
+        } else if (search) {
+            const searchPattern = `%${search}%`;
+            products = await sql`
+                SELECT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.created_at,
+                    a.name as artisan_name,
+                    (
+                        SELECT image_url FROM product_images pi
+                        WHERE pi.product_id = p.id
+                        ORDER BY pi.is_primary DESC, pi.created_at ASC
+                        LIMIT 1
+                    ) as image_url
+                FROM products p
+                LEFT JOIN artisans a ON p.artisan_id = a.id
+                WHERE p.name ILIKE ${searchPattern} OR p.description ILIKE ${searchPattern}
+                ORDER BY p.created_at DESC
+            `;
+        } else {
+            // Default: get all products
+            products = await sql`
+                SELECT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.created_at,
+                    a.name as artisan_name,
+                    (
+                        SELECT image_url FROM product_images pi
+                        WHERE pi.product_id = p.id
+                        ORDER BY pi.is_primary DESC, pi.created_at ASC
+                        LIMIT 1
+                    ) as image_url
+                FROM products p
+                LEFT JOIN artisans a ON p.artisan_id = a.id
+                ORDER BY
+                    CASE WHEN ${sort} = 'newest' THEN p.created_at END DESC,
+                    CASE WHEN ${sort} = 'oldest' THEN p.created_at END ASC,
+                    CASE WHEN ${sort} = 'price_low' THEN p.price END ASC,
+                    CASE WHEN ${sort} = 'price_high' THEN p.price END DESC,
+                    CASE WHEN ${sort} = 'name' THEN p.name END ASC
+            `;
+        }
+
         return NextResponse.json({ products });
     } catch (error) {
         console.error('Failed to fetch products:', error);
