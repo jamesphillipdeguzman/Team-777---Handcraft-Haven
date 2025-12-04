@@ -1,12 +1,18 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { getProducts} from "@/lib/products";  
+import { getProducts, findProducts} from "@/lib/products";  
 import ProductsGrid from "./productsGrid";
 
 
 
-export default async function ProductsPage() {
-  const products = await getProducts();
+export default async function ProductsPage(props: {
+  searchParams?: Promise<{
+    query?: string;
+  }>;
+})  {
+  const searchParams = await props.searchParams;
+  const query = searchParams?.query || '';
+    const products = await findProducts(query);
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
