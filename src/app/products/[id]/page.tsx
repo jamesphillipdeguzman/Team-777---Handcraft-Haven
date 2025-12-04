@@ -29,6 +29,7 @@ interface Product {
   artisan_id: number | null;
   artisan_name: string | null;
   artisan_bio: string | null;
+  artisan_profile_image: string | null;
   images: ProductImage[];
   categories: Category[];
 }
@@ -204,11 +205,10 @@ export default function ProductDetailPage({
                     <button
                       key={img.id}
                       onClick={() => setSelectedImage(img.image_url)}
-                      className={`relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden border-2 transition-colors ${
-                        selectedImage === img.image_url
+                      className={`relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden border-2 transition-colors ${selectedImage === img.image_url
                           ? "border-accent"
                           : "border-transparent hover:border-muted-foreground"
-                      }`}
+                        }`}
                     >
                       <Image
                         src={img.image_url}

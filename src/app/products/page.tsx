@@ -48,10 +48,7 @@ function ProductsContent() {
       .catch(console.error);
   }, []);
 
-  useEffect(() => {
-    const newSearch = searchParams.get("search") || "";
-    setSearchQuery(newSearch);
-  }, [searchParams]);
+  // Remove useEffect for synchronizing searchQuery, instead sync state via params in the updateFilters function and on first render.
 
   // Fetch products when filters change
   useEffect(() => {
@@ -102,13 +99,13 @@ function ProductsContent() {
 
   // Update URL when filters change
   const updateFilters = (category: string, sort: string, search: string) => {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (sort && sort !== "newest") params.set("sort", sort);
-  if (search) params.set("search", search);
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (sort && sort !== "newest") params.set("sort", sort);
+    if (search) params.set("search", search);
 
     router.push(`/products${params.toString() ? `?${params}` : ""}`, { scroll: false });
-  };  
+  };
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -116,9 +113,9 @@ function ProductsContent() {
   };
 
   const handleSortChange = (sort: string) => {
-  setSortBy(sort);
+    setSortBy(sort);
     updateFilters(selectedCategory, sort, searchQuery);
-  };  
+  };
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -192,11 +189,11 @@ function ProductsContent() {
           </div>
 
           {/* Search done */}
-            {(searchQuery !="") && ( 
-              <h2 className="text-xl font-semibold mb-4">
-                Results for: {searchQuery}
-              </h2>
-            )}
+          {(searchQuery != "") && (
+            <h2 className="text-xl font-semibold mb-4">
+              Results for: {searchQuery}
+            </h2>
+          )}
 
           {/* Results Count */}
           <div className="mb-4 text-sm text-muted-foreground">
