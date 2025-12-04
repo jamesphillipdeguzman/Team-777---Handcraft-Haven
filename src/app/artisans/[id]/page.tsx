@@ -23,7 +23,10 @@ export default function ArtisanProfilePage() {
     useEffect(() => {
         if (!id) return;
 
+        // Reset state when navigating between artisans
+        // setLoading(true);
         // setError(null);
+        // setArtisan(null);
 
         fetch(`/api/artisans/${id}`)
             .then((res) => {
