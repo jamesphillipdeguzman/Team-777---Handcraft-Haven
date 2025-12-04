@@ -11,11 +11,18 @@ import { useCart } from "@/context/CartContext";
 
 export function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
   const { wishlist } = useWishlist();
   const { getCartCount } = useCart();
-  const cartCount = getCartCount();
+  const cartCount = hasMounted ? getCartCount() : 0;
+  const wishlistCount = hasMounted ? wishlist.length : 0;
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setHasMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     fetch("/api/auth/status")
@@ -23,11 +30,11 @@ export function Navbar() {
       .then((data) => setLoggedIn(data.loggedIn))
       .catch(() => setLoggedIn(false)); // fallback
   }, []);
-  
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(); 
+    const params = new URLSearchParams();
     if (searchQuery.trim()) {
       params.set("search", searchQuery);
       window.location.href = `/products${params.toString() ? `?${params}` : ""}`;
@@ -91,9 +98,9 @@ export function Navbar() {
             <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/wishlist">
                 <Heart className="h-5 w-5" />
-                {wishlist.length > 0 && (
+                {wishlistCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {wishlist.length > 99 ? "99+" : wishlist.length}
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
                   </span>
                 )}
                 <span className="sr-only">Wishlist</span>
@@ -151,9 +158,9 @@ export function Navbar() {
                 {/* Wishlist with count */}
                 <Link href="/wishlist" className="relative text-sm font-medium hover:text-primary transition-colors">
                   Wishlist
-                  {wishlist.length > 0 && (
+                  {wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                      {wishlist.length > 99 ? "99+" : wishlist.length}
+                      {wishlistCount > 99 ? "99+" : wishlistCount}
                     </span>
                   )}
                 </Link>
