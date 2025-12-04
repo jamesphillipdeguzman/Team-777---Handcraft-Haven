@@ -23,11 +23,14 @@ export function Navbar() {
       .then((data) => setLoggedIn(data.loggedIn))
       .catch(() => setLoggedIn(false)); // fallback
   }, []);
+  
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    const params = new URLSearchParams(); 
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+      params.set("search", searchQuery);
+      window.location.href = `/products${params.toString() ? `?${params}` : ""}`;
     }
   };
 
