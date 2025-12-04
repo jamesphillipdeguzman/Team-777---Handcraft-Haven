@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
 import { useWishlist } from "@/context/wishlistContext";
+import { useCart } from "@/context/CartContext";
 
 export function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const { wishlist } = useWishlist();
+  const { getCartCount } = useCart();
+  const cartCount = getCartCount();
 
   useEffect(() => {
     fetch("/api/auth/status")
@@ -104,9 +107,14 @@ export function Navbar() {
                 <span className="sr-only">Wishlist</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
                 <span className="sr-only">Cart</span>
               </Link>
             </Button>
@@ -171,9 +179,14 @@ export function Navbar() {
 
                 <Link
                   href="/cart"
-                  className="text-sm font-medium transition-colors hover:text-primary"
+                  className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-2"
                 >
                   Cart
+                  {cartCount > 0 && (
+                    <span className="bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
                 </Link>
                 <Button
                   variant="ghost"
