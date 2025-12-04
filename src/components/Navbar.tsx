@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
 import { useWishlist } from "@/context/wishlistContext";
 import { useCart } from "@/context/CartContext";
@@ -61,6 +61,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
+            <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">Artisans</Link>
             <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">Categories</Link>
             <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">Products</Link>
             <Link href="/ratings" className="text-sm font-medium hover:text-primary transition-colors">Ratings</Link>
@@ -136,6 +137,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetTitle className="sr-only">Mobile navigation menu</SheetTitle>
               <nav className="flex flex-col gap-4 mt-8 m-5">
                 <form onSubmit={handleSearch} className="mb-4">
                   <div className="relative">
@@ -149,6 +151,7 @@ export function Navbar() {
                     />
                   </div>
                 </form>
+                <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">Artisans</Link>
                 <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">Categories</Link>
                 <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">Products</Link>
                 {loggedIn === false && (
