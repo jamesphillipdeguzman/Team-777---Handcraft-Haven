@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
+import { useWishlist } from "@/context/wishlistContext";
 
 interface Product {
   id: number;
@@ -24,6 +25,7 @@ interface Category {
 function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { addToWishlist } = useWishlist();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -206,8 +208,20 @@ function ProductsContent() {
                   price={product.price}
                   artisan_name={product.artisan_name}
                   image_url={product.image_url}
+                  onAddToWishlist={() =>
+                    addToWishlist({
+                      id: product.id,
+                      name: product.name,
+                      description: product.description,
+                      price: product.price,
+                      image_url: product.image_url ?? undefined,
+                      artisan_name: product.artisan_name ?? undefined,
+                    })
+                  }
                 />
               ))}
+
+
             </div>
           ) : (
             <div className="text-center py-12">

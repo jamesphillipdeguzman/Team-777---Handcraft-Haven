@@ -14,6 +14,7 @@ interface ProductCardProps {
   artisan_name: string | null;
   image_url: string | null;
   description?: string;
+  onAddToWishlist?: () => void;
 }
 
 export function ProductCard({
@@ -23,6 +24,7 @@ export function ProductCard({
   artisan_name,
   image_url,
   description,
+  onAddToWishlist,
 }: ProductCardProps) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
@@ -86,19 +88,39 @@ export function ProductCard({
               <p className="text-lg font-semibold text-foreground">
                 ${Number(price).toFixed(2)}
               </p>
-              <Button
-                size="sm"
-                variant={added ? "default" : "outline"}
-                className="h-8 w-8 p-0"
-                onClick={handleAddToCart}
-              >
-                {added ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <ShoppingCart className="h-4 w-4" />
+              <div className="flex gap-2">
+                {/* Add to Cart */}
+                <Button
+                  size="sm"
+                  variant={added ? "default" : "outline"}
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddToCart(e);
+                  }}
+                >
+                  {added ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+                </Button>
+
+                {/* Add to Wishlist */}
+                {onAddToWishlist && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onAddToWishlist();
+                    }}
+                  >
+                    ❤️
+                  </Button>
                 )}
-              </Button>
+              </div>
             </div>
+
           </div>
         </div>
       </Link>
