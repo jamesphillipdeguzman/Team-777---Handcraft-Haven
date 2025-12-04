@@ -15,7 +15,8 @@ export function Navbar() {
   useEffect(() => {
     fetch("/api/auth/status")
       .then((res) => res.json())
-      .then((data) => setLoggedIn(data.loggedIn));
+      .then((data) => setLoggedIn(data.loggedIn))
+      .catch(() => setLoggedIn(false)); // Fallback on error
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
