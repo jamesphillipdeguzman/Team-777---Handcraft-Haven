@@ -1,6 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+type Category = {
+    id: number;
+    name: string;
+};
+
 type Props = {
     selectedCategories: number[];
     setSelectedCategories: (ids: number[]) => void;
@@ -10,20 +15,22 @@ type Props = {
 
 const CategorySelector = ({ selectedCategories, setSelectedCategories, mode, assignedCategories }: Props) => {
     const [initialized, setInitialized] = useState(false);
-    const categories = [
-        { id: 1, name: 'Accessories' },
-        { id: 2, name: 'Art & Decor' },
-        { id: 3, name: 'Bags & Fashion' },
-        { id: 4, name: 'Beauty & Wellness' },
-        { id: 5, name: 'Candles & Scents' },
-        { id: 6, name: 'Ceramics' },
-        { id: 7, name: 'Home Decor' },
-        { id: 8, name: 'Jewelry' },
-        { id: 9, name: 'Kitchenware' },
-        { id: 10, name: 'Plants & Pots' },
-        { id: 11, name: 'Textiles' },
-        { id: 12, name: 'Woodwork' },
-    ];
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch categories from API
+    useEffect(() => {
+        fetch('/api/categories')
+            .then(res => res.json())
+            .then(data => {
+                setCategories(data.categories || []);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error('Error fetching categories:', error);
+                setLoading(false);
+            });
+    }, []);
 
     // Initialize selectedCategories from assignedCategories only once
     useEffect(() => {
@@ -41,6 +48,14 @@ const CategorySelector = ({ selectedCategories, setSelectedCategories, mode, ass
             setSelectedCategories([...selectedCategories, id]);
         }
     };
+
+    if (loading) {
+        return <div className="text-gray-500">Loading categories...</div>;
+    }
+
+    if (categories.length === 0) {
+        return <div className="text-gray-500">No categories available</div>;
+    }
 
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
