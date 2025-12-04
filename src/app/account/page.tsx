@@ -1,15 +1,16 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import AccountSettingsForm from "@/components/account/AccountSettingsForm";
+import { isLoggedIn } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function AccountPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
-  if (!token) {
+  if (!isLoggedIn(token)) {
     redirect("/login");
   }
 

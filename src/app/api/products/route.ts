@@ -17,14 +17,171 @@ cloudinary.config({
 });
 export const runtime = 'nodejs';
 
-// GET /api/products
-export async function GET() {
+// GET /api/products - Get all products with optional filtering
+export async function GET(request: Request) {
     try {
-        const products = await sql`
-            SELECT id, name
-            FROM products
-            ORDER BY name
-        `;
+        const { searchParams } = new URL(request.url);
+        const categoryId = searchParams.get('category');
+        const search = searchParams.get('search');
+        const sort = searchParams.get('sort') || 'newest';
+
+        // Build the base query with product info, primary image, and artisan
+        let products;
+
+        if (categoryId) {
+            products = await sql`
+                SELECT DISTINCT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.created_at,
+                    a.name as artisan_name,
+                    (
+                        SELECT image_url FROM product_images pi
+                        WHERE pi.product_id = p.id
+                        ORDER BY pi.is_primary DESC, pi.created_at ASC
+                        LIMIT 1
+                    ) as image_url
+                FROM products p
+                LEFT JOIN artisans a ON p.artisan_id = a.id
+                JOIN product_categories pc ON p.id = pc.product_id
+                WHERE pc.category_id = ${Number(categoryId)}
+                ORDER BY p.created_at DESC
+            `;
+        } else if (search) {
+            const searchPattern = `%${search}%`;
+            products = await sql`
+                SELECT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.price,
+                    p.created_at,
+                    a.name as artisan_name,
+                    (
+                        SELECT image_url FROM product_images pi
+                        WHERE pi.product_id = p.id
+                        ORDER BY pi.is_primary DESC, pi.created_at ASC
+                        LIMIT 1
+                    ) as image_url
+                FROM products p
+                LEFT JOIN artisans a ON p.artisan_id = a.id
+                WHERE p.name ILIKE ${searchPattern} OR p.description ILIKE ${searchPattern}
+                ORDER BY p.created_at DESC
+            `;
+        } else {
+            // Validate sort parameter against whitelist to prevent SQL injection
+            const allowedSorts = ['newest', 'oldest', 'price_low', 'price_high', 'name'];
+            const validatedSort = allowedSorts.includes(sort) ? sort : 'newest';
+
+            // Default: get all products with safe ORDER BY based on validated sort
+            // Using separate complete queries for each sort option to prevent SQL injection
+            switch (validatedSort) {
+                case 'oldest':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.created_at ASC
+                    `;
+                    break;
+                case 'price_low':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.price ASC
+                    `;
+                    break;
+                case 'price_high':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.price DESC
+                    `;
+                    break;
+                case 'name':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.name ASC
+                    `;
+                    break;
+                case 'newest':
+                default:
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.created_at DESC
+                    `;
+                    break;
+            }
+        }
+
         return NextResponse.json({ products });
     } catch (error) {
         console.error('Failed to fetch products:', error);

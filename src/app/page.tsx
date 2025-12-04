@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -19,9 +20,11 @@ export default function Home() {
               100% Handmade.
             </p>
 
-            <button className="mt-6 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-200 hover:text-black transition duration-300">
-              See Products
-            </button>
+            <Link href="/products">
+              <button className="mt-6 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-200 hover:text-black transition duration-300">
+                See Products
+              </button>
+            </Link>
           </div>
         </section>
         <div className="container mx-auto md:px-30 md:py-30 max-md:px-10 max-md:py-10 space-y-12">

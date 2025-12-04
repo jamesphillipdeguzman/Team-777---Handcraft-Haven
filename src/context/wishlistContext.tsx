@@ -9,6 +9,7 @@ type Product = {
     price: number;
     image_url?: string;
     category?: string;
+    artisan_name?: string | null;
 };
 
 type WishlistContextType = {
@@ -21,6 +22,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
     const [wishlist, setWishlist] = useState<Product[]>(() => {
+        // Initialize from localStorage immediately (lazy init)
         if (typeof window !== "undefined") {
             const stored = localStorage.getItem("wishlist");
             return stored ? JSON.parse(stored) : [];
@@ -30,18 +32,20 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
     // Save to localStorage whenever wishlist changes
     useEffect(() => {
-        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        if (typeof window !== "undefined") {
+            localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        }
     }, [wishlist]);
 
     const addToWishlist = (product: Product) => {
-        setWishlist(prev => {
-            if (prev.find(p => p.id === product.id)) return prev;
+        setWishlist((prev) => {
+            if (prev.some((p) => p.id === product.id)) return prev;
             return [...prev, product];
         });
     };
 
     const removeFromWishlist = (id: number) => {
-        setWishlist(prev => prev.filter(p => p.id !== id));
+        setWishlist((prev) => prev.filter((p) => p.id !== id));
     };
 
     return (
@@ -53,6 +57,6 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
 export function useWishlist() {
     const context = useContext(WishlistContext);
-    if (!context) throw new Error("useWishlist must be used inside WishlistProvider");
+    if (!context) throw new Error("useWishlist must be used inside a WishlistProvider");
     return context;
 }
