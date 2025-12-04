@@ -38,5 +38,10 @@ export function verifyToken(token: string): TokenPayload | null {
 // Check if logged in
 export function isLoggedIn(token?: string): boolean {
     if (!token) return false;
-    return !!verifyToken(token);
+    try {
+        const payload = verifyToken(token);
+        return !!payload;
+    } catch (err) {
+        return false;
+    }
 }
