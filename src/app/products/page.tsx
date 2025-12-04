@@ -36,6 +36,9 @@ function ProductsContent() {
   const [sortBy, setSortBy] = useState<string>(
     searchParams.get("sort") || "newest"
   );
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || ""
+  );
 
   // Fetch categories on mount
   useEffect(() => {
@@ -44,6 +47,11 @@ function ProductsContent() {
       .then((data) => setCategories(data.categories || []))
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    const newSearch = searchParams.get("search") || "";
+    setSearchQuery(newSearch);
+  }, [searchParams]);
 
   // Fetch products when filters change
   useEffect(() => {
@@ -54,6 +62,7 @@ function ProductsContent() {
       const params = new URLSearchParams();
       if (selectedCategory) params.set("category", selectedCategory);
       if (sortBy) params.set("sort", sortBy);
+      if (searchQuery) params.set("search", searchQuery);
 
       // Set loading state in async callback, not synchronously
       queueMicrotask(() => {
@@ -89,31 +98,32 @@ function ProductsContent() {
       isMounted = false;
       abortController.abort();
     };
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, searchQuery]);
 
   // Update URL when filters change
-  const updateFilters = (category: string, sort: string) => {
-    const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (sort && sort !== "newest") params.set("sort", sort);
+  const updateFilters = (category: string, sort: string, search: string) => {
+  const params = new URLSearchParams();
+  if (category) params.set("category", category);
+  if (sort && sort !== "newest") params.set("sort", sort);
+  if (search) params.set("search", search);
 
-    const queryString = params.toString();
-    router.push(`/products${queryString ? `?${queryString}` : ""}`, { scroll: false });
-  };
+    router.push(`/products${params.toString() ? `?${params}` : ""}`, { scroll: false });
+  };  
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    updateFilters(categoryId, sortBy);
+    updateFilters(categoryId, sortBy, searchQuery);
   };
 
   const handleSortChange = (sort: string) => {
-    setSortBy(sort);
-    updateFilters(selectedCategory, sort);
-  };
+  setSortBy(sort);
+    updateFilters(selectedCategory, sort, searchQuery);
+  };  
 
   const clearFilters = () => {
     setSelectedCategory("");
     setSortBy("newest");
+    setSearchQuery("");
     router.push("/products", { scroll: false });
   };
 
@@ -172,7 +182,7 @@ function ProductsContent() {
             </div>
 
             {/* Clear Filters */}
-            {(selectedCategory || sortBy !== "newest") && (
+            {(selectedCategory || sortBy !== "newest" || searchQuery) && (
               <div className="flex items-end">
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
@@ -180,6 +190,13 @@ function ProductsContent() {
               </div>
             )}
           </div>
+
+          {/* Search done */}
+            {(searchQuery !="") && ( 
+              <h2 className="text-xl font-semibold mb-4">
+                Results for: {searchQuery}
+              </h2>
+            )}
 
           {/* Results Count */}
           <div className="mb-4 text-sm text-muted-foreground">
