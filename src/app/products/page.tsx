@@ -45,21 +45,48 @@ export default function ProductsPage() {
 
   // Fetch products when filters change
   useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (selectedCategory) params.set("category", selectedCategory);
-    if (sortBy) params.set("sort", sortBy);
+    let isMounted = true;
+    const abortController = new AbortController();
 
-    fetch(`/api/products?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data.products || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
+    const fetchProducts = async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.set("category", selectedCategory);
+      if (sortBy) params.set("sort", sortBy);
+
+      // Set loading state in async callback, not synchronously
+      queueMicrotask(() => {
+        if (isMounted && !abortController.signal.aborted) {
+          setLoading(true);
+        }
       });
+
+      try {
+        const res = await fetch(`/api/products?${params.toString()}`, {
+          signal: abortController.signal
+        });
+        const data = await res.json();
+
+        if (isMounted) {
+          setProducts(data.products || []);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        console.error(err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [selectedCategory, sortBy]);
 
   // Update URL when filters change
