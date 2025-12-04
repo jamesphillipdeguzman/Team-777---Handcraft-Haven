@@ -71,30 +71,115 @@ export async function GET(request: Request) {
                 ORDER BY p.created_at DESC
             `;
         } else {
-            // Default: get all products
-            products = await sql`
-                SELECT
-                    p.id,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.created_at,
-                    a.name as artisan_name,
-                    (
-                        SELECT image_url FROM product_images pi
-                        WHERE pi.product_id = p.id
-                        ORDER BY pi.is_primary DESC, pi.created_at ASC
-                        LIMIT 1
-                    ) as image_url
-                FROM products p
-                LEFT JOIN artisans a ON p.artisan_id = a.id
-                ORDER BY
-                    CASE WHEN ${sort} = 'newest' THEN p.created_at END DESC,
-                    CASE WHEN ${sort} = 'oldest' THEN p.created_at END ASC,
-                    CASE WHEN ${sort} = 'price_low' THEN p.price END ASC,
-                    CASE WHEN ${sort} = 'price_high' THEN p.price END DESC,
-                    CASE WHEN ${sort} = 'name' THEN p.name END ASC
-            `;
+            // Validate sort parameter against whitelist to prevent SQL injection
+            const allowedSorts = ['newest', 'oldest', 'price_low', 'price_high', 'name'];
+            const validatedSort = allowedSorts.includes(sort) ? sort : 'newest';
+
+            // Default: get all products with safe ORDER BY based on validated sort
+            // Using separate complete queries for each sort option to prevent SQL injection
+            switch (validatedSort) {
+                case 'oldest':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.created_at ASC
+                    `;
+                    break;
+                case 'price_low':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.price ASC
+                    `;
+                    break;
+                case 'price_high':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.price DESC
+                    `;
+                    break;
+                case 'name':
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.name ASC
+                    `;
+                    break;
+                case 'newest':
+                default:
+                    products = await sql`
+                        SELECT
+                            p.id,
+                            p.name,
+                            p.description,
+                            p.price,
+                            p.created_at,
+                            a.name as artisan_name,
+                            (
+                                SELECT image_url FROM product_images pi
+                                WHERE pi.product_id = p.id
+                                ORDER BY pi.is_primary DESC, pi.created_at ASC
+                                LIMIT 1
+                            ) as image_url
+                        FROM products p
+                        LEFT JOIN artisans a ON p.artisan_id = a.id
+                        ORDER BY p.created_at DESC
+                    `;
+                    break;
+            }
         }
 
         return NextResponse.json({ products });

@@ -29,7 +29,7 @@ export default function CheckoutPage() {
   });
 
   const subtotal = getCartTotal();
-  const shipping = subtotal >= 100 ? 0 : 9.99;
+  const shipping = subtotal > 0 ? (subtotal >= 100 ? 0 : 9.99) : 0;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
@@ -280,12 +280,16 @@ export default function CheckoutPage() {
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={loading || !isLoggedIn}
+                  disabled={loading || isLoggedIn === false}
                 >
-                  {loading ? "Processing..." : `Place Order - $${total.toFixed(2)}`}
+                  {loading
+                    ? "Processing..."
+                    : isLoggedIn === null
+                      ? "Loading..."
+                      : `Place Order - $${total.toFixed(2)}`}
                 </Button>
 
-                {!isLoggedIn && (
+                {isLoggedIn === false && (
                   <p className="text-sm text-muted-foreground text-center mt-2">
                     Please log in to place an order
                   </p>

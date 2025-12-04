@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -21,7 +21,7 @@ interface Category {
   name: string;
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -239,6 +239,39 @@ export default function ProductsPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Products</h1>
+              <p className="text-muted-foreground">
+                Browse our collection of handcrafted items from talented artisans.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-muted rounded-lg aspect-square mb-4"></div>
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                  <div className="h-5 bg-muted rounded w-1/4"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
 
