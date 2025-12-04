@@ -52,6 +52,14 @@ export function Footer() {
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
+                  href="/artisans"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  All Artisans
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/categories"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >

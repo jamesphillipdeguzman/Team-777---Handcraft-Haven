@@ -9,6 +9,41 @@ export default function SignupPage() {
     const [role, setRole] = useState<"user" | "artisan">("user");
     const [name, setName] = useState("");
     const [bio, setBio] = useState("");
+    const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+
+    const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadError(null);
+        setUploadingImage(true);
+
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+
+            const res = await fetch("/api/cloudinary/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data?.url) {
+                throw new Error(data?.error || "Upload failed");
+            }
+
+            setProfileImageUrl(data.url);
+        } catch (error) {
+            console.error("Profile upload failed:", error);
+            setUploadError("Failed to upload profile image. Please try again.");
+            setProfileImageUrl(null);
+        } finally {
+            setUploadingImage(false);
+        }
+    };
 
     const router = useRouter();
 
@@ -24,6 +59,7 @@ export default function SignupPage() {
                 role,
                 name: role === "artisan" ? name : null,
                 bio: role === "artisan" ? bio : null,
+                profile_image: role === "artisan" ? profileImageUrl : null,
             }),
         });
 
@@ -75,6 +111,7 @@ export default function SignupPage() {
                     required
                 />
 
+
                 {/* Artisan fields only appear if role = artisan */}
                 {role === "artisan" && (
                     <>
@@ -96,9 +133,31 @@ export default function SignupPage() {
                     </>
                 )}
 
+                {role === "artisan" && (
+                    <>
+                        <p className="text-sm text-muted-foreground">Profile Image (optional)</p>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfileImageUpload}
+                            className="border border-border p-2 rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        {uploadingImage && (
+                            <p className="text-xs text-muted-foreground">Uploading image...</p>
+                        )}
+                        {profileImageUrl && !uploadingImage && (
+                            <p className="text-xs text-emerald-600">Image uploaded successfully.</p>
+                        )}
+                        {uploadError && (
+                            <p className="text-xs text-destructive">{uploadError}</p>
+                        )}
+                    </>
+                )}
+
                 <button
                     type="submit"
-                    className="bg-primary text-primary-foreground p-2 rounded hover:bg-primary-foreground hover:text-primary transition-colors"
+                    className="bg-primary text-primary-foreground p-2 rounded hover:bg-primary-foreground hover:text-primary transition-colors disabled:opacity-50"
+                    disabled={uploadingImage}
                 >
                     Sign Up
                 </button>
