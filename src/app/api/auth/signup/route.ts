@@ -5,7 +5,7 @@ import { signToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password, role, name, bio } = await req.json();
+        const { email, password, role, name, bio, profile_image } = await req.json();
 
         if (!email || !password) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
         // If role is artisan, insert into artisans table
         if (role === "artisan") {
             await sql`
-                INSERT INTO artisans (user_id, name, email, bio)
-                VALUES (${newUser.id}, ${name}, ${email}, ${bio ?? null})
+                INSERT INTO artisans (user_id, name, email, bio, profile_image)
+                VALUES (${newUser.id}, ${name}, ${email}, ${bio ?? null}, ${profile_image ?? null})
             `;
         }
 

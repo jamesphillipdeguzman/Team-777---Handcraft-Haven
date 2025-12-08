@@ -4,24 +4,40 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Search, ShoppingCart, Heart, User, Menu, LogIn } from "lucide-react";
+import { useWishlist } from "@/context/wishlistContext";
+import { useCart } from "@/context/CartContext";
 
 export function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  const { wishlist } = useWishlist();
+  const { getCartCount } = useCart();
+  const cartCount = hasMounted ? getCartCount() : 0;
+  const wishlistCount = hasMounted ? wishlist.length : 0;
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setHasMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     fetch("/api/auth/status")
       .then((res) => res.json())
-      .then((data) => setLoggedIn(data.loggedIn));
+      .then((data) => setLoggedIn(data.loggedIn))
+      .catch(() => setLoggedIn(false)); // fallback
   }, []);
 
-  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    const params = new URLSearchParams();
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+      params.set("search", searchQuery);
+      window.location.href = `/products${params.toString() ? `?${params}` : ""}`;
     }
   };
 
@@ -45,32 +61,15 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/categories"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Categories
-            </Link>
-            <Link
-              href="/products"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Products
-            </Link>
-            <Link
-              href="/ratings"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Ratings
-            </Link>
+            <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">Artisans</Link>
+            <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">Categories</Link>
+            <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">Products</Link>
+            <Link href="/ratings" className="text-sm font-medium hover:text-primary transition-colors">Ratings</Link>
           </nav>
         </div>
 
         {/* Search Bar */}
-        <form
-          onSubmit={handleSearch}
-          className="hidden lg:flex flex-1 max-w-md mx-8"
-        >
+        <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-md mx-8">
           <div className="relative w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -95,23 +94,35 @@ export function Navbar() {
                 </Link>
               </Button>
             )}
-            <Button variant="ghost" size="icon" asChild>
+
+            {/* Wishlist */}
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/wishlist">
                 <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                  </span>
+                )}
                 <span className="sr-only">Wishlist</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" asChild>
+
+            {/* Cart */}
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
                 <span className="sr-only">Cart</span>
               </Link>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleAccountClick}
-            >
+
+            {/* Account */}
+            <Button variant="ghost" size="icon" onClick={handleAccountClick}>
               <User className="h-5 w-5" />
               <span className="sr-only">Account</span>
             </Button>
@@ -126,6 +137,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetTitle className="sr-only">Mobile navigation menu</SheetTitle>
               <nav className="flex flex-col gap-4 mt-8 m-5">
                 <form onSubmit={handleSearch} className="mb-4">
                   <div className="relative">
@@ -139,43 +151,34 @@ export function Navbar() {
                     />
                   </div>
                 </form>
-                <Link
-                  href="/categories"
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
-                  Categories
-                </Link>
-                <Link
-                  href="/products"
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
-                  Products
-                </Link>
+                <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">Artisans</Link>
+                <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">Categories</Link>
+                <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">Products</Link>
                 {loggedIn === false && (
-                  <Link
-                    href="/login"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Login
-                  </Link>
+                  <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">Login</Link>
                 )}
-                <Link
-                  href="/wishlist"
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
+
+                {/* Wishlist with count */}
+                <Link href="/wishlist" className="relative text-sm font-medium hover:text-primary transition-colors">
                   Wishlist
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistCount > 99 ? "99+" : wishlistCount}
+                    </span>
+                  )}
                 </Link>
-                <Link
-                  href="/cart"
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
+
+                {/* Cart */}
+                <Link href="/cart" className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors relative">
                   Cart
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
                 </Link>
-                <Button
-                  variant="ghost"
-                  className="text-left p-0"
-                  onClick={handleAccountClick}
-                >
+
+                <Button variant="ghost" className="text-left p-0" onClick={handleAccountClick}>
                   Account
                 </Button>
               </nav>
