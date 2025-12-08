@@ -52,11 +52,20 @@ export async function GET(
             WHERE pc.product_id = ${productId}
         `;
 
+        // Get product ratings
+        const ratings = await sql`
+            SELECT id, name, comment, star_rating
+            FROM ratings
+            WHERE product_id = ${productId}
+            ORDER BY id DESC
+        `;
+
         return NextResponse.json({
             product: {
                 ...product,
                 images,
-                categories
+                categories,
+                ratings
             }
         });
     } catch (error) {
@@ -83,7 +92,6 @@ export async function PUT(
             return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
         }
 
-        // Update product info
         const updatedProducts = await sql`
       UPDATE products
       SET name = ${name}, description = ${description}, price = ${Number(price)}
@@ -92,12 +100,9 @@ export async function PUT(
     `;
         const updatedProduct = updatedProducts[0];
 
-        // Update categories if provided
         if (Array.isArray(categoryIds)) {
-            // Delete old categories
             await sql`DELETE FROM product_categories WHERE product_id = ${productId};`;
 
-            // Insert new categories
             await Promise.all(
                 categoryIds.map((catId: number) =>
                     sql`

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const categoryId = searchParams.get('category');
-        const search = searchParams.get('search')||'';
+        const search = searchParams.get('search') || '';
         const sort = searchParams.get('sort') || 'newest';
 
         // Build the base query with product info, primary image, and artisan

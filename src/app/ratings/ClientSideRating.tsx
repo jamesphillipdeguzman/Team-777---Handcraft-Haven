@@ -1,25 +1,34 @@
 /* eslint-disable react-hooks/static-components */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Review = {
     id: number;
     name: string;
     comment: string;
     star_rating: number;
+    product_id: number;
 };
 
 
 type Props = {
-    ratings: Review[];
+    productId: number;
 };
 
-export default function ClientSideRating({ ratings }: Props) {
-    const [localRatings, setLocalRatings] = useState<Review[]>(ratings);
+export default function ClientSideRating({ productId }: Props) {
+    const [localRatings, setLocalRatings] = useState<Review[]>([]);
     const [name, setName] = useState("");
     const [comment, setComment] = useState("");
     const [star_rating, setStarRating] = useState(0);
+
+    // This is used for fetching existing comments for a certain product
+    useEffect(() => {
+        fetch(`/api/ratings?productId=${productId}`)
+            .then((res) => res.json())
+            .then((data) => setLocalRatings(data.ratings || []))
+            .catch(console.error);
+    }, [productId]);
 
     // This is the star rating
     const StarRating = ({
@@ -60,7 +69,7 @@ export default function ClientSideRating({ ratings }: Props) {
             const res = await fetch("/api/ratings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, comment, star_rating }),
+                body: JSON.stringify({ name, comment, star_rating, product_id: productId }),
             });
 
             if (!res.ok) {
@@ -119,7 +128,7 @@ export default function ClientSideRating({ ratings }: Props) {
             <div>
                 {localRatings.map((r, index) => (
                     <div
-                        key={r.id ?? index} // unique key fallback
+                        key={r.id ?? index}
                         className="border p-4 rounded mb-4 shadow-sm"
                     >
                         <div className="font-semibold">{r.name}</div>
