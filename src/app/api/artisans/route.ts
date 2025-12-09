@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
         const result = await sql`
       INSERT INTO artisans (user_id, name, email, bio, profile_image)
-      VALUES (${userId}, ${name}, ${email}, ${bio}, ${profile_image ?? null})
+      VALUES (${userId}, ${name}, ${email}, ${bio ?? null}, ${profile_image ?? null})
       RETURNING *
     `;
 
