@@ -112,9 +112,42 @@ export function formatZodError(error: z.ZodError): string {
     return error.issues.map((issue) => issue.message).join(', ');
 }
 
+// Profile update validation
+export const profileUpdateSchema = z.object({
+    name: z
+        .string()
+        .max(255, 'Name must be less than 255 characters')
+        .transform(sanitizeString)
+        .optional(),
+    email: emailSchema.optional(),
+    artisanName: z
+        .string()
+        .max(255, 'Shop name must be less than 255 characters')
+        .transform(sanitizeString)
+        .optional(),
+    artisanBio: z
+        .string()
+        .max(1000, 'Bio must be less than 1000 characters')
+        .transform(sanitizeString)
+        .optional(),
+});
+
+// Change password validation
+export const changePasswordSchema = z.object({
+    type: z.literal('password'),
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: passwordSchema,
+    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+}).refine(
+    (data) => data.newPassword === data.confirmPassword,
+    { message: 'New passwords do not match', path: ['confirmPassword'] }
+);
+
 // Type exports
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
 export type AddressInput = z.infer<typeof addressSchema>;
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
