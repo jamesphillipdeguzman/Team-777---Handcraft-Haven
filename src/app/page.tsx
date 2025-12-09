@@ -8,7 +8,15 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="">
-        <section className="relative h-[80vh] bg-[url('/images/hero.webp')] bg-cover bg-center bg-no-repeat flex items-center px-6">
+        <section className="relative h-[80vh] flex items-center px-6">
+          <Image
+            src="/images/hero.webp"
+            alt="Handcrafted artisan items displayed on a rustic wooden surface"
+            fill
+            priority
+            className="object-cover object-center -z-10"
+            sizes="100vw"
+          />
           <div className="absolute inset-0 max-md:bg-black/40"></div>
 
           <div className="relative z-10 max-md:text-white md:ml-30 md:text-left max-md:text-center md:max-w-100 max-md:w-full">

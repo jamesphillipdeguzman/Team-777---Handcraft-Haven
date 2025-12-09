@@ -1,27 +1,47 @@
-/* eslint-disable react-hooks/static-components */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Review = {
     id: number;
     name: string;
     comment: string;
     star_rating: number;
+    product_id?: number;
+    product_name?: string;
+    created_at?: string;
 };
 
+type Product = {
+    id: number;
+    name: string;
+};
 
 type Props = {
     ratings: Review[];
+    products: Product[];
 };
 
-export default function ClientSideRating({ ratings }: Props) {
+export default function ClientSideRating({ ratings, products }: Props) {
     const [localRatings, setLocalRatings] = useState<Review[]>(ratings);
     const [name, setName] = useState("");
     const [comment, setComment] = useState("");
     const [star_rating, setStarRating] = useState(0);
+    const [selectedProductId, setSelectedProductId] = useState<number | "">("");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
-    // This is the star rating
+    // Check authentication status
+    useEffect(() => {
+        fetch("/api/auth/status")
+            .then((res) => res.json())
+            .then((data) => setIsLoggedIn(data.authenticated))
+            .catch(() => setIsLoggedIn(false));
+    }, []);
+
+    // Star rating component
     const StarRating = ({
         star_rating,
         onRate,
@@ -40,7 +60,7 @@ export default function ClientSideRating({ ratings }: Props) {
                     }}
                     xmlns="http://www.w3.org/2000/svg"
                     className={`h-6 w-6 ${star <= star_rating ? "text-yellow-400" : "text-gray-300"
-                        } ${!readOnly ? "cursor-pointer" : ""}`}
+                        } ${!readOnly ? "cursor-pointer hover:scale-110 transition-transform" : ""}`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                 >
@@ -51,82 +71,193 @@ export default function ClientSideRating({ ratings }: Props) {
     );
 
     const handleSubmit = async () => {
-        if (!name || !comment || star_rating === 0) {
-            alert("Please fill in all fields and select a rating.");
+        setError(null);
+        setSuccess(null);
+
+        if (!name || !comment || star_rating === 0 || !selectedProductId) {
+            setError("Please fill in all fields, select a product, and choose a rating.");
             return;
         }
+
+        setIsSubmitting(true);
 
         try {
             const res = await fetch("/api/ratings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, comment, star_rating }),
+                body: JSON.stringify({
+                    name,
+                    comment,
+                    star_rating,
+                    product_id: selectedProductId,
+                }),
             });
 
             if (!res.ok) {
                 const errorData = await res.json();
-                alert(errorData.error || "Failed to submit rating.");
+                setError(errorData.error || "Failed to submit rating.");
+                setIsSubmitting(false);
                 return;
             }
 
             const newReview: Review = await res.json();
 
+            // Find product name for display
+            const product = products.find(p => p.id === selectedProductId);
+            newReview.product_name = product?.name;
+
             setLocalRatings([newReview, ...localRatings]);
 
-            // This resets the form when a new comment is created
+            // Reset form
             setName("");
             setComment("");
             setStarRating(0);
+            setSelectedProductId("");
+            setSuccess("Your review has been submitted successfully!");
         } catch (err) {
             console.error("Error submitting rating:", err);
-            alert("An unexpected error occurred.");
+            setError("An unexpected error occurred. Please try again.");
+        } finally {
+            setIsSubmitting(false);
         }
+    };
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
     };
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold">Ratings</h1>
-            <p className="mt-4 text-gray-600">
-                Work In progress: Ratings will be connected to Products and Artisans, but momentarily stand on their own.
+            <h1 className="text-3xl font-bold">Product Reviews</h1>
+            <p className="mt-2 text-gray-600">
+                Share your experience with products from our artisan marketplace.
             </p>
 
-            {/* This is the form the user uses to make a new comments */}
-            <div className="mt-8 p-4 border rounded-lg shadow-md mb-8">
-                <input
-                    className="w-full border p-2 mb-2 rounded"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                />
-                <textarea
-                    className="w-full border p-2 mb-2 rounded"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Your comment"
-                />
-                <div className="mb-2">
+            {/* Review submission form */}
+            <div className="mt-8 p-6 border rounded-lg shadow-md mb-8 bg-white">
+                <h2 className="text-xl font-semibold mb-4">Write a Review</h2>
+
+                {!isLoggedIn && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-sm">
+                        You are submitting as a guest. <a href="/login" className="underline font-medium">Log in</a> to track your reviews and prevent duplicates.
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+                        {success}
+                    </div>
+                )}
+
+                {/* Product selector */}
+                <div className="mb-4">
+                    <label htmlFor="product" className="block text-sm font-medium text-gray-700 mb-1">
+                        Select Product *
+                    </label>
+                    <select
+                        id="product"
+                        className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={selectedProductId}
+                        onChange={(e) => setSelectedProductId(e.target.value ? Number(e.target.value) : "")}
+                    >
+                        <option value="">Choose a product to review...</option>
+                        {products.map((product) => (
+                            <option key={product.id} value={product.id}>
+                                {product.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="mb-4">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Name *
+                    </label>
+                    <input
+                        id="name"
+                        className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name"
+                        maxLength={255}
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Review *
+                    </label>
+                    <textarea
+                        id="comment"
+                        className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Share your experience with this product..."
+                        rows={4}
+                        maxLength={2000}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{comment.length}/2000 characters</p>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Rating *
+                    </label>
                     <StarRating star_rating={star_rating} onRate={setStarRating} readOnly={false} />
                 </div>
+
                 <button
                     onClick={handleSubmit}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                    disabled={isSubmitting}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                    Submit Review
+                    {isSubmitting ? "Submitting..." : "Submit Review"}
                 </button>
             </div>
 
-            {/* This is the reviews that are displayed on the page from the database */}
+            {/* Reviews list */}
             <div>
-                {localRatings.map((r, index) => (
-                    <div
-                        key={r.id ?? index} // unique key fallback
-                        className="border p-4 rounded mb-4 shadow-sm"
-                    >
-                        <div className="font-semibold">{r.name}</div>
-                        <div className="text-gray-700">{r.comment}</div>
-                        <StarRating star_rating={r.star_rating} readOnly={true} />
-                    </div>
-                ))}
+                <h2 className="text-xl font-semibold mb-4">
+                    All Reviews ({localRatings.length})
+                </h2>
+
+                {localRatings.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to write one!</p>
+                ) : (
+                    localRatings.map((r, index) => (
+                        <div
+                            key={r.id ?? index}
+                            className="border p-4 rounded-lg mb-4 shadow-sm bg-white hover:shadow-md transition-shadow"
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <span className="font-semibold">{r.name}</span>
+                                    {r.product_name && (
+                                        <span className="text-gray-500 text-sm ml-2">
+                                            on <span className="font-medium">{r.product_name}</span>
+                                        </span>
+                                    )}
+                                </div>
+                                {r.created_at && (
+                                    <span className="text-gray-400 text-sm">{formatDate(r.created_at)}</span>
+                                )}
+                            </div>
+                            <StarRating star_rating={r.star_rating} readOnly={true} />
+                            <p className="text-gray-700 mt-2">{r.comment}</p>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );
