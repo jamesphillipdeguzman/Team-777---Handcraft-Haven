@@ -32,13 +32,12 @@ export async function GET(
                 r.name,
                 r.comment,
                 r.star_rating,
-                r.created_at,
                 r.user_id,
                 u.email as user_email
             FROM ratings r
             LEFT JOIN users u ON r.user_id = u.id
             WHERE r.product_id = ${id}
-            ORDER BY r.created_at DESC
+            ORDER BY r.id DESC
         `;
 
         // Calculate average rating
@@ -139,7 +138,7 @@ export async function POST(
         const result = await sql`
             INSERT INTO ratings (product_id, user_id, name, comment, star_rating)
             VALUES (${id}, ${userId}, ${name}, ${comment}, ${star_rating})
-            RETURNING id, name, comment, star_rating, created_at, user_id
+            RETURNING id, name, comment, star_rating, user_id
         `;
 
         return NextResponse.json({ review: result[0] }, { status: 201 });

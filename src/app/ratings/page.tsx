@@ -21,11 +21,11 @@ type Product = {
 export default async function RatingPage() {
     // Fetch all ratings with product info
     const ratings = await sql`
-        SELECT r.id, r.name, r.comment, r.star_rating, r.product_id, r.created_at,
+        SELECT r.id, r.name, r.comment, r.star_rating, r.product_id,
                p.name as product_name
         FROM ratings r
         LEFT JOIN products p ON r.product_id = p.id
-        ORDER BY r.created_at DESC
+        ORDER BY r.id DESC
     ` as Review[];
 
     // Fetch all products for the selector
