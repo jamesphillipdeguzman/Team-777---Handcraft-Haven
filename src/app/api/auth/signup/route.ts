@@ -2,19 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { hashPassword } from '@/lib/hash';
 import { signToken } from '@/lib/auth';
+import { signupSchema, formatZodError } from '@/lib/validations';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password, role, name, bio, profile_image } = await req.json();
+        const body = await req.json();
 
-        if (!email || !password) {
-            return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+        // Validate input with Zod
+        const parseResult = signupSchema.safeParse(body);
+        if (!parseResult.success) {
+            return NextResponse.json(
+                { error: formatZodError(parseResult.error) },
+                { status: 400 }
+            );
         }
 
-        // If artisan name is required
-        if (role === "artisan" && !name) {
-            return NextResponse.json({ error: "Name is required for artisans" }, { status: 400 });
-        }
+        const { email, password, role, name, bio, profile_image } = parseResult.data;
 
         // Check if user already exists
         const rowsExistingUser = await sql`

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { sql } from '@/lib/db';
+import { reviewSchema, formatZodError } from '@/lib/validations';
 
 interface JwtPayload {
     userId: number;
@@ -99,24 +100,17 @@ export async function POST(
         }
 
         const body = await request.json();
-        const { name, comment, star_rating } = body;
 
-        // Validate required fields
-        if (!name || !comment || star_rating == null) {
+        // Validate input with Zod
+        const parseResult = reviewSchema.safeParse(body);
+        if (!parseResult.success) {
             return NextResponse.json(
-                { error: 'Name, comment, and star rating are required' },
+                { error: formatZodError(parseResult.error) },
                 { status: 400 }
             );
         }
 
-        // Validate star rating
-        const rating = Number(star_rating);
-        if (isNaN(rating) || rating < 1 || rating > 5) {
-            return NextResponse.json(
-                { error: 'Star rating must be between 1 and 5' },
-                { status: 400 }
-            );
-        }
+        const { name, comment, star_rating } = parseResult.data;
 
         // Check if product exists
         const productCheck = await sql`SELECT id FROM products WHERE id = ${id}`;
@@ -144,7 +138,7 @@ export async function POST(
         // Insert the review
         const result = await sql`
             INSERT INTO ratings (product_id, user_id, name, comment, star_rating)
-            VALUES (${id}, ${userId}, ${name}, ${comment}, ${rating})
+            VALUES (${id}, ${userId}, ${name}, ${comment}, ${star_rating})
             RETURNING id, name, comment, star_rating, created_at, user_id
         `;
 
