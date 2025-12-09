@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { Check } from "lucide-react";
+import { RelatedProducts } from "@/components/RelatedProducts";
 
 interface ProductImage {
   id: number;
@@ -344,6 +345,9 @@ export default function ProductDetailPage({
               )}
             </div>
           </div>
+
+          {/* Related Products */}
+          <RelatedProducts productId={product.id} />
         </div>
       </main>
       <Footer />
