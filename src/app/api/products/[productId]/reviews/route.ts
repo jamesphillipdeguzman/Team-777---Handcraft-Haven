@@ -31,20 +31,24 @@ export async function GET(
                 r.id,
                 r.name,
                 r.comment,
-                r.star_rating,
+                r.star_rating::INTEGER as star_rating,
                 r.user_id,
+                r.product_id,
+                r.created_at,
+                p.name as product_name,
                 u.email as user_email
             FROM ratings r
             LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN products p ON r.product_id = p.id
             WHERE r.product_id = ${id}
-            ORDER BY r.id DESC
+            ORDER BY r.created_at DESC
         `;
 
         // Calculate average rating
         const statsResult = await sql`
             SELECT
                 COUNT(*)::int as total_reviews,
-                COALESCE(AVG(star_rating), 0)::float as average_rating
+                COALESCE(AVG(star_rating::numeric), 0)::float as average_rating
             FROM ratings
             WHERE product_id = ${id}
         `;
@@ -138,10 +142,10 @@ export async function POST(
         const result = await sql`
             INSERT INTO ratings (product_id, user_id, name, comment, star_rating)
             VALUES (${id}, ${userId}, ${name}, ${comment}, ${star_rating})
-            RETURNING id, name, comment, star_rating, user_id
+            RETURNING id, name, comment, star_rating, user_id, product_id, created_at
         `;
 
-        return NextResponse.json({ review: result[0] }, { status: 201 });
+        return NextResponse.json({ ...result[0], product_name: productCheck[0].name }, { status: 201 });
     } catch (error) {
         console.error('Failed to create review:', error);
         return NextResponse.json(

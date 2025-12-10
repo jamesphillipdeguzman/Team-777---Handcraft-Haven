@@ -54,11 +54,10 @@ function StarRating({
           className={interactive ? "cursor-pointer" : "cursor-default"}
         >
           <Star
-            className={`${sizeClasses[size]} ${
-              star <= (hoverRating || rating)
-                ? "fill-yellow-400 text-yellow-400"
-                : "fill-none text-gray-300"
-            } transition-colors`}
+            className={`${sizeClasses[size]} ${star <= (hoverRating || rating)
+              ? "fill-yellow-400 text-yellow-400"
+              : "fill-none text-gray-300"
+              } transition-colors`}
           />
         </button>
       ))}
@@ -82,6 +81,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
   useEffect(() => {
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchReviews = async () => {
@@ -89,7 +89,10 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       const res = await fetch(`/api/products/${productId}/reviews`);
       const data = await res.json();
       setReviews(data.reviews || []);
+      // setReviews(Array.isArray(data) ? data : data.reviews || []);
+
       setStats(data.stats || { totalReviews: 0, averageRating: 0 });
+
     } catch {
       console.error("Failed to fetch reviews");
     } finally {
@@ -126,15 +129,16 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       }
 
       const data = await res.json();
-      setReviews([data.review, ...reviews]);
-      setStats({
-        totalReviews: stats.totalReviews + 1,
-        averageRating:
-          (stats.averageRating * stats.totalReviews + starRating) /
-          (stats.totalReviews + 1),
-      });
 
-      // Reset form
+      // use functional updates
+      setReviews((prevReviews) => [data.review, ...prevReviews]);
+      setStats((prevStats) => ({
+        totalReviews: prevStats.totalReviews + 1,
+        averageRating:
+          (prevStats.averageRating * prevStats.totalReviews + starRating) /
+          (prevStats.totalReviews + 1),
+      }));
+
       setName("");
       setComment("");
       setStarRating(0);
@@ -147,6 +151,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       setSubmitting(false);
     }
   };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
