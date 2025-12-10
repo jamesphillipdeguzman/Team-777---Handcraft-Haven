@@ -21,8 +21,8 @@ type Props = {
 };
 
 export default function ImageUploader({
-    mode,
-    artisanId,
+    // mode,
+    // artisanId,
     product,
     productId,
     refreshTrigger,

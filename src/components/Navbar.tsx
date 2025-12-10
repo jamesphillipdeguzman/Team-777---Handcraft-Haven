@@ -93,10 +93,11 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Desktop Icons */}
           <div className="hidden md:flex items-center gap-2">
+
+
             {hasMounted &&
               (user.loggedIn ? (
-                <Button variant="ghost" className="flex items-center gap-1" onClick={handleAccountClick}>
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" className="flex items-center gap-1" onClick={() => (window.location.href = "/dashboard")}>
                   <span>Welcome {user.username}</span>
                 </Button>
               ) : (
@@ -106,31 +107,6 @@ export function Navbar() {
                 </Button>
               ))}
 
-            {/* Wishlist */}
-            <Button variant="ghost" size="icon" asChild className="relative">
-              <Link href="/wishlist">
-                <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {wishlistCount > 99 ? "99+" : wishlistCount}
-                  </span>
-                )}
-                <span className="sr-only">Wishlist</span>
-              </Link>
-            </Button>
-
-            {/* Cart */}
-            <Button variant="ghost" size="icon" asChild className="relative">
-              <Link href="/cart">
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                )}
-                <span className="sr-only">Cart</span>
-              </Link>
-            </Button>
 
             {/* Account Icon */}
             <Button variant="ghost" size="icon" onClick={handleAccountClick}>
@@ -138,6 +114,33 @@ export function Navbar() {
               <span className="sr-only">Account</span>
             </Button>
           </div>
+
+          {/* Wishlist */}
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/wishlist">
+              <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+              <span className="sr-only">Wishlist</span>
+            </Link>
+          </Button>
+
+          {/* Cart */}
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/cart">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+              <span className="sr-only">Cart</span>
+            </Link>
+          </Button>
+
 
           {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">
