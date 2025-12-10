@@ -31,6 +31,7 @@ export default function SearchPage({
 
   useEffect(() => {
     if (query) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
       fetch(`/api/products?search=${encodeURIComponent(query)}`)
         .then((res) => res.json())
