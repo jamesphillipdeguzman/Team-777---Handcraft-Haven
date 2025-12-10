@@ -7,7 +7,16 @@ import { Button } from '@/components/ui/button';
 import AddProductForm from './dashboard/AddProductForm';
 import ImageUploader from './ImageUploader';
 
-type User = { id: number; email: string };
+type User = {
+    id: number;
+    email: string;
+    artisan?: {
+        id: number;
+        name?: string | null;
+        bio?: string;
+        profile_image?: string | null;
+    } | null;
+};
 
 export type Product = {
     id: number;
@@ -18,27 +27,21 @@ export type Product = {
     categoryIds?: number[];
 };
 
-interface DashboardWelcomeProps {
-    name: string;
-    profileImage?: string | null;
-}
-
-export default function DashboardWelcome({ name, profileImage }: DashboardWelcomeProps) {
+export default function DashboardWelcome() {
     const [user, setUser] = useState<User | null>(null);
     const [artisanId, setArtisanId] = useState<number | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [mode, setMode] = useState<'add' | 'manage'>('add');
-    const [loading, setLoading] = useState(true);
     const [loggingOut, setLoggingOut] = useState(false);
 
     const router = useRouter();
 
-    // Load user & artisan
+    // Load user, artisan, and products
     useEffect(() => {
         let isMounted = true;
 
-        async function loadDashboard() {
+        const loadDashboard = async () => {
             try {
                 const resUser = await fetch('/api/auth/me', { credentials: 'include' });
                 const dataUser = await resUser.json();
@@ -50,7 +53,6 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                 const resArtisan = await fetch(`/api/artisans/by-user/${dataUser.user.id}`);
                 const dataArtisan = await resArtisan.json();
                 const artisanId = dataArtisan.artisan?.id ?? null;
-
                 setArtisanId(artisanId);
 
                 if (artisanId) {
@@ -60,10 +62,8 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                 }
             } catch (err) {
                 console.error('Error loading dashboard:', err);
-            } finally {
-                if (isMounted) setLoading(false);
             }
-        }
+        };
 
         loadDashboard();
         return () => { isMounted = false; };
@@ -95,7 +95,6 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
             const res = await fetch(`/api/products/${productId}/categories`);
             const data = await res.json();
             const categoryIds: number[] = data.categoryIds || [];
-
             setSelectedProduct({ ...prod, categoryIds });
             setMode('manage');
         } catch (err) {
@@ -105,40 +104,35 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
         }
     };
 
-
-    const username = user?.email?.split('@')[0];
-    const welcomeText = loading ? 'Loading user...' : user ? `Welcome, ${username}!` : 'Welcome!';
-    console.log(welcomeText);
+    // Display name: artisan name if available, otherwise email prefix
+    const displayName = user?.artisan?.name || user?.email.split('@')[0] || 'User';
 
     return (
         <div className="w-full flex flex-col gap-6">
             {/* Profile Welcome Section */}
             <div className="flex items-center gap-4 mb-2">
                 <h2 className="text-2xl font-semibold text-gray-900">
-                    Welcome, {name}
+                    Welcome, {displayName}!
                 </h2>
 
-                {/* Profile image or placeholder */}
-                {profileImage ? (
+                {user?.artisan?.profile_image ? (
                     <Image
-                        src={profileImage}
-                        alt={name}
+                        src={user.artisan.profile_image}
+                        alt={displayName}
                         width={48}
                         height={48}
                         className="w-12 h-12 rounded-full object-cover"
                     />
                 ) : (
                     <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-white font-bold">{name[0]}</span>
+                        <span className="text-white font-bold">{displayName[0]}</span>
                     </div>
                 )}
             </div>
 
-
             {/* Header with logout */}
             <div className="flex flex-col sm:flex-row sm:items-center
-                bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
-                {/* If NOT logged in → show Login button instead */}
+                      bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
                 {!user ? (
                     <Button
                         variant="outline"
@@ -157,9 +151,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                         {loggingOut ? "Logging out..." : "Logout"}
                     </Button>
                 )}
-
             </div>
-
 
             {/* Product Selector */}
             {products.length > 0 && (
@@ -179,7 +171,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                 </div>
             )}
 
-            {/* Forms */}
+            {/* Add/Edit Product Form */}
             {artisanId !== null && (
                 <AddProductForm
                     artisanId={artisanId}
@@ -197,8 +189,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                 />
             )}
 
-
-            {/* Image Upload if product selected */}
+            {/* Image Upload */}
             {artisanId && selectedProduct && (
                 <div className="mt-6">
                     <ImageUploader
