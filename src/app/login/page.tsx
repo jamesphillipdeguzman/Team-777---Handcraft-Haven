@@ -28,7 +28,7 @@ export default function LoginPage() {
 
         // Cookie is already set by the server as HttpOnly
         // No need to set it client-side
-        alert(data?.message || "Login successful!");
+        // alert(data?.message || "Login successful!");
 
         if (data.role === "artisan") {
             router.replace("/dashboard");

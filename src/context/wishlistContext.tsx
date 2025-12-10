@@ -29,7 +29,55 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Check authentication status
+    // -------------------------------
+    // Helper functions
+    // -------------------------------
+    const getLocalStorageWishlist = (): Product[] => {
+        if (typeof window === "undefined") return [];
+        try {
+            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (!stored) return [];
+            const parsed = JSON.parse(stored);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    };
+
+    const setLocalStorageWishlist = (items: Product[]) => {
+        if (typeof window === "undefined") return;
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+        } catch { }
+    };
+
+    const clearLocalStorageWishlist = () => {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+        }
+        setWishlist([]);
+    };
+
+    const syncLocalToDatabase = async (items: Product[]) => {
+        if (!items.length) return;
+        try {
+            await Promise.all(
+                items.map(item =>
+                    fetch("/api/wishlist", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ product_id: item.id }),
+                    })
+                )
+            );
+        } catch (error) {
+            console.error("Error syncing wishlist items to database:", error);
+        }
+    };
+
+    // -------------------------------
+    // Check auth status
+    // -------------------------------
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -43,41 +91,40 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         checkAuth();
     }, []);
 
+    // -------------------------------
     // Load wishlist based on auth status
+    // -------------------------------
     useEffect(() => {
-        if (isLoggedIn === null) return; // Wait for auth check
+        if (isLoggedIn === null) return;
 
         const loadWishlist = async () => {
             setLoading(true);
 
             if (isLoggedIn) {
-                // User is logged in - fetch from database
+                // Logged-in: fetch DB wishlist
                 try {
                     const res = await fetch("/api/wishlist");
                     if (res.ok) {
                         const data = await res.json();
-                        setWishlist(data.items || []);
+                        let dbWishlist: Product[] = data.items || [];
 
-                        // Sync any localStorage items to database (for items added as guest)
+                        // Merge localStorage items if any
                         const localItems = getLocalStorageWishlist();
                         if (localItems.length > 0) {
                             await syncLocalToDatabase(localItems);
                             clearLocalStorageWishlist();
-                            // Refetch to get updated list
-                            const refreshRes = await fetch("/api/wishlist");
-                            if (refreshRes.ok) {
-                                const refreshData = await refreshRes.json();
-                                setWishlist(refreshData.items || []);
-                            }
+                            dbWishlist = [...dbWishlist, ...localItems];
                         }
+
+                        setWishlist(dbWishlist);
+                    } else {
+                        setWishlist(getLocalStorageWishlist());
                     }
-                } catch (error) {
-                    console.error("Error loading wishlist from database:", error);
-                    // Fallback to localStorage
+                } catch {
                     setWishlist(getLocalStorageWishlist());
                 }
             } else {
-                // Guest user - use localStorage
+                // Guest: use localStorage
                 setWishlist(getLocalStorageWishlist());
             }
 
@@ -87,88 +134,60 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         loadWishlist();
     }, [isLoggedIn]);
 
+    // -------------------------------
     // Save to localStorage for guests
+    // -------------------------------
     useEffect(() => {
-        if (isLoggedIn === false && typeof window !== "undefined") {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(wishlist));
+        if (isLoggedIn === false) {
+            setLocalStorageWishlist(wishlist);
         }
     }, [wishlist, isLoggedIn]);
 
-    const getLocalStorageWishlist = (): Product[] => {
-        if (typeof window === "undefined") return [];
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    };
+    // -------------------------------
+    // Wishlist actions
+    // -------------------------------
+    const addToWishlist = useCallback(
+        async (product: Product) => {
+            // Prevent duplicates
+            setWishlist(prev => {
+                if (prev.some(p => p.id === product.id)) return prev;
+                return [...prev, product];
+            });
 
-    const clearLocalStorageWishlist = () => {
-        if (typeof window !== "undefined") {
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-        }
-    };
-
-    const syncLocalToDatabase = async (items: Product[]) => {
-        for (const item of items) {
-            try {
-                await fetch("/api/wishlist", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ product_id: item.id }),
-                });
-            } catch (error) {
-                console.error("Error syncing item to database:", error);
-            }
-        }
-    };
-
-    const addToWishlist = useCallback(async (product: Product) => {
-        // Optimistically update UI
-        setWishlist((prev) => {
-            if (prev.some((p) => p.id === product.id)) return prev;
-            return [...prev, product];
-        });
-
-        if (isLoggedIn) {
-            // Sync to database
-            try {
-                await fetch("/api/wishlist", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ product_id: product.id }),
-                });
-            } catch (error) {
-                console.error("Error adding to wishlist:", error);
-                // Revert on error
-                setWishlist((prev) => prev.filter((p) => p.id !== product.id));
-            }
-        }
-    }, [isLoggedIn]);
-
-    const removeFromWishlist = useCallback(async (id: number) => {
-        // Optimistically update UI
-        const previousWishlist = wishlist;
-        setWishlist((prev) => prev.filter((p) => p.id !== id));
-
-        if (isLoggedIn) {
-            // Sync to database
-            try {
-                const res = await fetch(`/api/wishlist/${id}`, {
-                    method: "DELETE",
-                });
-                if (!res.ok) {
+            if (isLoggedIn) {
+                try {
+                    await fetch("/api/wishlist", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ product_id: product.id }),
+                    });
+                } catch {
                     // Revert on error
+                    setWishlist(prev => prev.filter(p => p.id !== product.id));
+                }
+            }
+        },
+        [isLoggedIn]
+    );
+
+    const removeFromWishlist = useCallback(
+        async (id: number) => {
+            const previousWishlist = wishlist;
+            setWishlist(prev => prev.filter(p => p.id !== id));
+
+            if (isLoggedIn) {
+                try {
+                    const res = await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
+                    if (!res.ok) setWishlist(previousWishlist);
+                } catch {
                     setWishlist(previousWishlist);
                 }
-            } catch (error) {
-                console.error("Error removing from wishlist:", error);
-                // Revert on error
-                setWishlist(previousWishlist);
             }
-        }
-    }, [isLoggedIn, wishlist]);
+        },
+        [isLoggedIn, wishlist]
+    );
 
-    const isInWishlist = useCallback((id: number) => {
-        return wishlist.some((p) => p.id === id);
-    }, [wishlist]);
+    const isInWishlist = useCallback((id: number) => wishlist.some(p => p.id === id), [wishlist]);
 
     return (
         <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist, loading }}>
