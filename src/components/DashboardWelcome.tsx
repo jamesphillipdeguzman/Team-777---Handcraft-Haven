@@ -138,14 +138,26 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
             {/* Header with logout */}
             <div className="flex flex-col sm:flex-row sm:items-center
                 bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
-                <Button
-                    variant="outline"
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="mt-2 sm:mt-0"
-                >
-                    {loggingOut ? "Logging out..." : "Logout"}
-                </Button>
+                {/* If NOT logged in → show Login button instead */}
+                {!user ? (
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push('/login')}
+                        className="mt-2 sm:mt-0"
+                    >
+                        Login
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline"
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                        className="mt-2 sm:mt-0"
+                    >
+                        {loggingOut ? "Logging out..." : "Logout"}
+                    </Button>
+                )}
+
             </div>
 
 
