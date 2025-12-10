@@ -10,9 +10,11 @@ import { useWishlist } from "@/context/wishlistContext";
 import { useCart } from "@/context/CartContext";
 
 export function Navbar() {
-  const [user, setUser] = useState<{ loggedIn: boolean; username?: string }>({
+  const [user, setUser] = useState<{ loggedIn: boolean; username?: string; isArtisan?: boolean }>({
     loggedIn: false,
+    isArtisan: false,
   });
+
   const [hasMounted, setHasMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -39,12 +41,13 @@ export function Navbar() {
           setUser({
             loggedIn: true,
             username: data.user.email?.split("@")[0],
+            isArtisan: data.user.isArtisan || false,
           });
         } else {
-          setUser({ loggedIn: false });
+          setUser({ loggedIn: false, isArtisan: false });
         }
       } catch {
-        setUser({ loggedIn: false });
+        setUser({ loggedIn: false, isArtisan: false });
       }
     }
 
@@ -78,9 +81,10 @@ export function Navbar() {
             <Link href="/categories" className="text-sm font-medium hover:text-primary">Categories</Link>
             <Link href="/products" className="text-sm font-medium hover:text-primary">Products</Link>
             <Link href="/ratings" className="text-sm font-medium hover:text-primary">Ratings</Link>
-            {user.loggedIn && (
+            {user.loggedIn && user.isArtisan && (
               <Link href="/dashboard" className="text-sm font-medium hover:text-primary">Dashboard</Link>
             )}
+
           </nav>
         </div>
 
@@ -173,9 +177,10 @@ export function Navbar() {
                 <Link href="/categories" className="text-sm font-medium hover:text-primary">Categories</Link>
                 <Link href="/products" className="text-sm font-medium hover:text-primary">Products</Link>
                 <Link href="/ratings" className="text-sm font-medium hover:text-primary">Ratings</Link>
-                {user.loggedIn && (
+                {user.loggedIn && user.isArtisan && (
                   <Link href="/dashboard" className="text-sm font-medium hover:text-primary">Dashboard</Link>
                 )}
+
                 {!user.loggedIn && (
                   <Link href="/login" className="text-sm font-medium hover:text-primary">Login</Link>
                 )}
