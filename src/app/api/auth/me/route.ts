@@ -119,7 +119,7 @@ export async function PUT(req: NextRequest) {
             );
         }
 
-        const { name, email, artisanName, artisanBio } = parseResult.data;
+        const { email, artisanName, artisanBio } = parseResult.data;
 
         // Check if email is already taken by another user
         if (email) {
