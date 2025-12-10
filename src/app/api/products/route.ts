@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 // import type { UploadApiResponse } from 'cloudinary';
 import { sql } from '@/lib/db';
+import { productSchema, formatZodError } from '@/lib/validations';
 
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 const cloudApiKey = process.env.CLOUDINARY_API_KEY;
@@ -200,16 +201,29 @@ export async function POST(request: Request) {
     const description = formData.get('description') as string;
     const price = formData.get('price') as string;
     const images = formData.getAll('images') as File[];
-    if (!name || !description || !price || images.length === 0) {
+
+    // Validate product data with Zod
+    const parseResult = productSchema.safeParse({ name, description, price });
+    if (!parseResult.success) {
         return NextResponse.json(
-            { error: 'Missing required fields' },
+            { error: formatZodError(parseResult.error) },
             { status: 400 }
         );
     }
+
+    if (images.length === 0) {
+        return NextResponse.json(
+            { error: 'At least one image is required' },
+            { status: 400 }
+        );
+    }
+
+    const validatedData = parseResult.data;
+
     try {
         const result = await sql`
             INSERT INTO products (name, description, price)
-            VALUES (${name}, ${description}, ${price})
+            VALUES (${validatedData.name}, ${validatedData.description || ''}, ${validatedData.price})
             RETURNING id
         `;
         const productId = result[0].id;

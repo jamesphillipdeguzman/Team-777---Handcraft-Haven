@@ -3,14 +3,22 @@ import { NextResponse, NextRequest } from "next/server";
 import { sql } from "@/lib/db";
 import { comparePassword } from "@/lib/hash";
 import { signToken } from "@/lib/auth";
+import { loginSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
+        const body = await req.json();
 
-        if (!email || !password) {
-            return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+        // Validate input with Zod
+        const parseResult = loginSchema.safeParse(body);
+        if (!parseResult.success) {
+            return NextResponse.json(
+                { error: formatZodError(parseResult.error) },
+                { status: 400 }
+            );
         }
+
+        const { email, password } = parseResult.data;
 
         const [user] = await sql`SELECT * FROM users WHERE email=${email}`;
 

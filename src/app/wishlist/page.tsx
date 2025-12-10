@@ -3,44 +3,108 @@
 import { useWishlist } from "@/context/wishlistContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
+import { Heart, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 
 export default function WishlistPage() {
-  const { wishlist, removeFromWishlist } = useWishlist();
+  const { wishlist, removeFromWishlist, loading } = useWishlist();
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">My Wishlist</h1>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">My Wishlist</h1>
+          <p className="mt-2 text-gray-600">
+            Items you&apos;ve saved for later
+          </p>
+        </div>
 
-        {wishlist.length === 0 ? (
-          <p className="text-gray-600">No product added yet.</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : wishlist.length === 0 ? (
+          <div className="rounded-lg border-2 border-dashed border-gray-200 p-12 text-center">
+            <Heart className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-4 text-lg font-medium text-gray-900">
+              Your wishlist is empty
+            </h3>
+            <p className="mt-2 text-gray-500">
+              Start adding products you love to your wishlist.
+            </p>
+            <Link href="/products">
+              <Button className="mt-4 gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Browse Products
+              </Button>
+            </Link>
+          </div>
         ) : (
-          <ul className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {wishlist.map((p) => (
-              <li key={p.id} className="border rounded p-4 shadow flex flex-col">
-                <Image
-                  src={p.image_url ?? "/placeholder.png"}
-                  alt={p.name ?? "Product Image"}
-                  className="w-full h-64 object-cover mb-4"
-                  width={500}
-                  height={500}
-                />
-                <h2 className="text-xl font-semibold">{p.name}</h2>
-                <p className="text-gray-500">{p.category}</p>
-                <p className="text-green-600 font-bold">R$ {p.price}</p>
-                <p className="text-sm text-gray-700 mt-2">{p.description}</p>
-                <button
-                  onClick={() => removeFromWishlist(p.id)}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center justify-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9M9.26 9l.346 9m9.968-3.21c.342.052.682.107 1.022.166M18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                  </svg>
-                </button>
-              </li>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {wishlist.map((product) => (
+              <div
+                key={product.id}
+                className="group bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Link href={`/products/${product.id}`}>
+                  <div className="aspect-square relative bg-gray-100">
+                    <Image
+                      src={product.image_url ?? "/placeholder.png"}
+                      alt={product.name ?? "Product Image"}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                </Link>
+
+                <div className="p-4">
+                  <Link href={`/products/${product.id}`}>
+                    <h2 className="text-lg font-semibold text-gray-900 hover:text-amber-600 transition-colors line-clamp-1">
+                      {product.name}
+                    </h2>
+                  </Link>
+
+                  {product.category && (
+                    <p className="text-sm text-gray-500 mt-1">{product.category}</p>
+                  )}
+
+                  {product.artisan_name && (
+                    <p className="text-sm text-gray-500">by {product.artisan_name}</p>
+                  )}
+
+                  <p className="text-lg font-bold text-green-600 mt-2">
+                    ${Number(product.price).toFixed(2)}
+                  </p>
+
+                  {product.description && (
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex gap-2">
+                    <Link href={`/products/${product.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        View Details
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeFromWishlist(product.id)}
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </main>
       <Footer />
