@@ -37,7 +37,7 @@ export default function ClientSideRating({ ratings, products }: Props) {
     useEffect(() => {
         fetch("/api/auth/status")
             .then((res) => res.json())
-            .then((data) => setIsLoggedIn(data.authenticated))
+            .then((data) => setIsLoggedIn(data.loggedIn))
             .catch(() => setIsLoggedIn(false));
     }, []);
 
