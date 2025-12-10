@@ -26,19 +26,19 @@ export async function GET(req: NextRequest) {
             }
             rows = await sql`
                 SELECT r.id, r.name, r.comment, r.star_rating, r.product_id, r.user_id,
-                       p.name as product_name
+                       p.name as product_name, r.created_at
                 FROM ratings r
                 LEFT JOIN products p ON r.product_id = p.id
                 WHERE r.product_id = ${id}
-                ORDER BY r.id DESC
+                ORDER BY r.created_at DESC
             `;
         } else {
             rows = await sql`
                 SELECT r.id, r.name, r.comment, r.star_rating, r.product_id, r.user_id,
-                       p.name as product_name
+                       p.name as product_name, r.created_at
                 FROM ratings r
                 LEFT JOIN products p ON r.product_id = p.id
-                ORDER BY r.id DESC
+                ORDER BY r.created_at DESC
             `;
         }
 
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
         const result = await sql`
             INSERT INTO ratings (name, comment, star_rating, product_id, user_id)
             VALUES (${name}, ${comment}, ${star_rating}, ${productIdNum}, ${userId})
-            RETURNING id, name, comment, star_rating, product_id, user_id
+            RETURNING id, name, comment, star_rating, product_id, user_id, created_at
         `;
 
         return NextResponse.json(result[0], { status: 201 });
