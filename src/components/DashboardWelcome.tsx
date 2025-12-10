@@ -7,7 +7,16 @@ import { Button } from '@/components/ui/button';
 import AddProductForm from './dashboard/AddProductForm';
 import ImageUploader from './ImageUploader';
 
-type User = { id: number; email: string };
+type User = {
+    id: number;
+    email: string;
+    artisan?: {
+        id: number;
+        name?: string | null;
+        bio?: string;
+        profile_image?: string | null;
+    } | null;
+};
 
 export type Product = {
     id: number;
@@ -19,8 +28,8 @@ export type Product = {
 };
 
 interface DashboardWelcomeProps {
-    name: string;
-    profileImage?: string | null;
+    name: string; // fallback name from page
+    profileImage?: string | null; // optional fallback
 }
 
 export default function DashboardWelcome({ name, profileImage }: DashboardWelcomeProps) {
@@ -45,6 +54,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                 if (!isMounted) return;
 
                 setUser(dataUser?.user ?? null);
+
                 if (!dataUser?.user?.id) return;
 
                 const resArtisan = await fetch(`/api/artisans/by-user/${dataUser.user.id}`);
@@ -58,6 +68,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                     const dataProducts = await resProducts.json();
                     setProducts(dataProducts.products || []);
                 }
+
             } catch (err) {
                 console.error('Error loading dashboard:', err);
             } finally {
@@ -105,40 +116,37 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
         }
     };
 
-
-    const username = user?.email?.split('@')[0];
-    const welcomeText = loading ? 'Loading user...' : user ? `Welcome, ${username}!` : 'Welcome!';
-    console.log(welcomeText);
+    // Compute displayName: artisan name > page prop name > email prefix
+    const displayName = user?.artisan?.name || name || user?.email.split('@')[0] || 'User';
+    const profileImgSrc = user?.artisan?.profile_image || profileImage || null;
 
     return (
         <div className="w-full flex flex-col gap-6">
             {/* Profile Welcome Section */}
             <div className="flex items-center gap-4 mb-2">
                 <h2 className="text-2xl font-semibold text-gray-900">
-                    Welcome, {name}
+                    Welcome, {displayName}!
                 </h2>
 
                 {/* Profile image or placeholder */}
-                {profileImage ? (
+                {profileImgSrc ? (
                     <Image
-                        src={profileImage}
-                        alt={name}
+                        src={profileImgSrc}
+                        alt={displayName}
                         width={48}
                         height={48}
                         className="w-12 h-12 rounded-full object-cover"
                     />
                 ) : (
                     <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-white font-bold">{name[0]}</span>
+                        <span className="text-white font-bold">{displayName[0]}</span>
                     </div>
                 )}
             </div>
 
-
             {/* Header with logout */}
             <div className="flex flex-col sm:flex-row sm:items-center
                 bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
-                {/* If NOT logged in → show Login button instead */}
                 {!user ? (
                     <Button
                         variant="outline"
@@ -157,9 +165,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                         {loggingOut ? "Logging out..." : "Logout"}
                     </Button>
                 )}
-
             </div>
-
 
             {/* Product Selector */}
             {products.length > 0 && (
@@ -196,7 +202,6 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                     }}
                 />
             )}
-
 
             {/* Image Upload if product selected */}
             {artisanId && selectedProduct && (
