@@ -270,35 +270,23 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       )}
 
       {/* Reviews List */}
-      {reviews.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No reviews yet. Be the first to review this product!</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {reviews.map((review) => (
-            <div
-              key={review.id}
-              className="border-b border-border pb-6 last:border-0"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-medium">{review.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <StarRating rating={review.star_rating} size="sm" />
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(review.created_at)}
-                    </span>
-                  </div>
-                </div>
+      {reviews?.map((review, idx) => (
+        review ? (
+          <div key={idx} className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-medium">{review.name ?? "Anonymous"}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <StarRating rating={review.star_rating ?? 0} size="sm" />
+                <span className="text-sm text-muted-foreground">{review.comment ?? ""}</span>
               </div>
-              <p className="mt-3 text-muted-foreground whitespace-pre-line">
-                {review.comment}
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatDate(review.created_at)}
               </p>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : null
+      ))}
+
     </div>
   );
 }

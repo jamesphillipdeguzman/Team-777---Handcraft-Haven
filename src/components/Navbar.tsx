@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -14,25 +14,28 @@ export function Navbar() {
   const { wishlist } = useWishlist();
   const { getCartCount } = useCart();
 
-  const cartCount = hasMounted ? getCartCount() : 0;
-  const wishlistCount = hasMounted ? wishlist.length : 0;
-
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Client-only mount
   useEffect(() => {
-    const id = requestAnimationFrame(() => setHasMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasMounted(true);
 
-  useEffect(() => {
+    // Fetch username and login status from API or localStorage
     fetch("/api/auth/status")
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         const username = data.user?.email?.split("@")[0];
         setUser({ loggedIn: !!data.loggedIn, username });
       })
       .catch(() => setUser({ loggedIn: false }));
-  }, []);
+
+    // Load cart and wishlist counts
+    setCartCount(getCartCount());
+    setWishlistCount(wishlist.length);
+  }, [wishlist, getCartCount]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +55,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
+
         {/* Logo */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center space-x-2">
@@ -60,18 +64,10 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">
-              Artisans
-            </Link>
-            <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">
-              Categories
-            </Link>
-            <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">
-              Products
-            </Link>
-            <Link href="/ratings" className="text-sm font-medium hover:text-primary transition-colors">
-              Ratings
-            </Link>
+            <Link href="/artisans" className="text-sm font-medium hover:text-primary transition-colors">Artisans</Link>
+            <Link href="/categories" className="text-sm font-medium hover:text-primary transition-colors">Categories</Link>
+            <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">Products</Link>
+            <Link href="/ratings" className="text-sm font-medium hover:text-primary transition-colors">Ratings</Link>
           </nav>
         </div>
 
@@ -91,12 +87,11 @@ export function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2">
+
           {/* Desktop Icons */}
           <div className="hidden md:flex items-center gap-2">
-
-
-            {hasMounted &&
-              (user.loggedIn ? (
+            {hasMounted && (
+              user.loggedIn ? (
                 <Button variant="ghost" className="flex items-center gap-1" onClick={() => (window.location.href = "/dashboard")}>
                   <span>Welcome {user.username}</span>
                 </Button>
@@ -105,8 +100,8 @@ export function Navbar() {
                   <LogIn className="h-5 w-5" />
                   <span>Login</span>
                 </Button>
-              ))}
-
+              )
+            )}
 
             {/* Account Icon */}
             <Button variant="ghost" size="icon" onClick={handleAccountClick}>
@@ -119,7 +114,7 @@ export function Navbar() {
           <Button variant="ghost" size="icon" asChild className="relative">
             <Link href="/wishlist">
               <Heart className="h-5 w-5" />
-              {wishlistCount > 0 && (
+              {hasMounted && wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {wishlistCount > 99 ? "99+" : wishlistCount}
                 </span>
@@ -132,7 +127,7 @@ export function Navbar() {
           <Button variant="ghost" size="icon" asChild className="relative">
             <Link href="/cart">
               <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
+              {hasMounted && cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
@@ -140,7 +135,6 @@ export function Navbar() {
               <span className="sr-only">Cart</span>
             </Link>
           </Button>
-
 
           {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">

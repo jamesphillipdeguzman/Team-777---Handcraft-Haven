@@ -21,21 +21,22 @@ export default function LoginPage() {
 
         const data = await res.json();
 
-        if (!res.ok) {
-            alert(data?.error || "Unable to log in. Please try again.");
-            return;
+        if (res.ok) {
+            // Save the logged-in user in localStorage (overwrite old one)
+            const username = email.split("@")[0];
+            const userData = { loggedIn: true, username };
+            localStorage.setItem("user", JSON.stringify(userData));
+
+            // Navigate based on role
+            if (data.role === "artisan") {
+                router.replace("/dashboard");
+            } else {
+                router.replace("/account");
+            }
         }
 
-        // Cookie is already set by the server as HttpOnly
-        // No need to set it client-side
-        // alert(data?.message || "Login successful!");
-
-        if (data.role === "artisan") {
-            router.replace("/dashboard");
-        } else {
-            router.replace("/account");
-        }
     }
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background">
