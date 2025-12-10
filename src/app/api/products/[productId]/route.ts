@@ -83,7 +83,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
         }
 
-        // Update product info
+        // Update product
         const updatedProducts = await sql`
       UPDATE products
       SET name = ${name}, description = ${description}, price = ${Number(price)}
@@ -92,12 +92,10 @@ export async function PUT(
     `;
         const updatedProduct = updatedProducts[0];
 
-        // Update categories if provided
+        // Update categories
         if (Array.isArray(categoryIds)) {
-            // Delete old categories
             await sql`DELETE FROM product_categories WHERE product_id = ${productId};`;
 
-            // Insert new categories
             await Promise.all(
                 categoryIds.map((catId: number) =>
                     sql`
@@ -109,7 +107,28 @@ export async function PUT(
             );
         }
 
-        return NextResponse.json({ success: true, product: updatedProduct }, { status: 200 });
+        // narrow type for returned rows
+        type CategoryRow = { category_id: number };
+
+        // fetch updated category ids and assert type
+        const updatedCats = (await sql`
+      SELECT category_id
+      FROM product_categories
+      WHERE product_id = ${productId};
+    `) as CategoryRow[];
+
+        const updatedCategoryIds = updatedCats.map(row => row.category_id);
+
+        return NextResponse.json(
+            {
+                success: true,
+                product: {
+                    ...updatedProduct,
+                    categoryIds: updatedCategoryIds
+                }
+            },
+            { status: 200 }
+        );
     } catch (err) {
         console.error('Error updating product:', err);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

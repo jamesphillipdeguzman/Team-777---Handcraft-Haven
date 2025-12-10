@@ -42,3 +42,29 @@ export async function PUT(
 }
 
 
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ productId: string }> } // notice Promise here
+) {
+    try {
+        const { productId } = await params; // <-- await the promise
+        const id = Number(productId);
+
+        if (isNaN(id)) {
+            return NextResponse.json({ categoryIds: [] }, { status: 400 });
+        }
+
+        const rows = await sql`
+      SELECT category_id
+      FROM product_categories
+      WHERE product_id = ${id};
+    `;
+
+        const categoryIds = rows.map(row => row.category_id);
+
+        return NextResponse.json({ categoryIds }, { status: 200 });
+    } catch (err) {
+        console.error('Error fetching product categories:', err);
+        return NextResponse.json({ categoryIds: [] }, { status: 500 });
+    }
+}

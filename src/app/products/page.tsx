@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/context/wishlistContext";
+import ProductImageCarousel from "@/components/ProductImageCarousel";
 
 interface Product {
   id: number;
@@ -15,6 +16,7 @@ interface Product {
   price: number;
   artisan_name: string | null;
   image_url: string | null;
+  images?: { id: number; image_url: string }[];
 }
 
 interface Category {
@@ -48,8 +50,6 @@ function ProductsContent() {
       .catch(console.error);
   }, []);
 
-  // Remove useEffect for synchronizing searchQuery, instead sync state via params in the updateFilters function and on first render.
-
   // Fetch products when filters change
   useEffect(() => {
     let isMounted = true;
@@ -61,16 +61,13 @@ function ProductsContent() {
       if (sortBy) params.set("sort", sortBy);
       if (searchQuery) params.set("search", searchQuery);
 
-      // Set loading state in async callback, not synchronously
       queueMicrotask(() => {
-        if (isMounted && !abortController.signal.aborted) {
-          setLoading(true);
-        }
+        if (isMounted && !abortController.signal.aborted) setLoading(true);
       });
 
       try {
         const res = await fetch(`/api/products?${params.toString()}`, {
-          signal: abortController.signal
+          signal: abortController.signal,
         });
         const data = await res.json();
 
@@ -79,13 +76,9 @@ function ProductsContent() {
           setLoading(false);
         }
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          return;
-        }
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error(err);
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -97,14 +90,15 @@ function ProductsContent() {
     };
   }, [selectedCategory, sortBy, searchQuery]);
 
-  // Update URL when filters change
   const updateFilters = (category: string, sort: string, search: string) => {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (sort && sort !== "newest") params.set("sort", sort);
     if (search) params.set("search", search);
 
-    router.push(`/products${params.toString() ? `?${params}` : ""}`, { scroll: false });
+    router.push(`/products${params.toString() ? `?${params}` : ""}`, {
+      scroll: false,
+    });
   };
 
   const handleCategoryChange = (categoryId: string) => {
@@ -141,7 +135,10 @@ function ProductsContent() {
           <div className="flex flex-col md:flex-row gap-4 mb-8">
             {/* Category Filter */}
             <div className="flex-1">
-              <label htmlFor="category" className="block text-sm font-medium mb-2">
+              <label
+                htmlFor="category"
+                className="block text-sm font-medium mb-2"
+              >
                 Category
               </label>
               <select
@@ -188,8 +185,8 @@ function ProductsContent() {
             )}
           </div>
 
-          {/* Search done */}
-          {(searchQuery != "") && (
+          {/* Search Results */}
+          {searchQuery && (
             <h2 className="text-xl font-semibold mb-4">
               Results for: {searchQuery}
             </h2>
@@ -197,7 +194,9 @@ function ProductsContent() {
 
           {/* Results Count */}
           <div className="mb-4 text-sm text-muted-foreground">
-            {loading ? "Loading..." : `${products.length} product${products.length !== 1 ? "s" : ""} found`}
+            {loading
+              ? "Loading..."
+              : `${products.length} product${products.length !== 1 ? "s" : ""} found`}
           </div>
 
           {/* Product Grid */}
@@ -215,27 +214,32 @@ function ProductsContent() {
           ) : products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  artisan_name={product.artisan_name}
-                  image_url={product.image_url}
-                  onAddToWishlist={() =>
-                    addToWishlist({
-                      id: product.id,
-                      name: product.name,
-                      description: product.description,
-                      price: product.price,
-                      image_url: product.image_url ?? undefined,
-                      artisan_name: product.artisan_name ?? undefined,
-                    })
-                  }
-                />
+                <div key={product.id}>
+                  {product.images && product.images.length > 0 ? (
+                    <ProductImageCarousel images={product.images} layout="grid" />
+
+                  ) : (
+                    <ProductCard
+                      id={product.id}
+                      name={product.name}
+                      price={product.price}
+                      artisan_name={product.artisan_name}
+                      image_url={product.image_url}
+                      onAddToWishlist={() =>
+                        addToWishlist({
+                          id: product.id,
+                          name: product.name,
+                          description: product.description,
+                          price: product.price,
+                          image_url: product.image_url ?? undefined,
+                          artisan_name: product.artisan_name ?? undefined,
+                        })
+                      }
+                    />
+                  )}
+
+                </div>
               ))}
-
-
             </div>
           ) : (
             <div className="text-center py-12">
@@ -272,35 +276,36 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-1">
-          <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Products</h1>
-              <p className="text-muted-foreground">
-                Browse our collection of handcrafted items from talented artisans.
-              </p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <main className="flex-1">
+            <div className="container mx-auto px-4 py-8">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">Products</h1>
+                <p className="text-muted-foreground">
+                  Browse our collection of handcrafted items from talented
+                  artisans.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-muted rounded-lg aspect-square mb-4"></div>
+                    <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                    <div className="h-5 bg-muted rounded w-1/4"></div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-muted rounded-lg aspect-square mb-4"></div>
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
-                  <div className="h-5 bg-muted rounded w-1/4"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    }>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
       <ProductsContent />
     </Suspense>
   );
 }
-
-

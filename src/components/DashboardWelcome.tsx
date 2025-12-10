@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from "next/image";
 import { Button } from '@/components/ui/button';
 import AddProductForm from './dashboard/AddProductForm';
 import ImageUploader from './ImageUploader';
 
 type User = { id: number; email: string };
+
 export type Product = {
     id: number;
     name: string;
@@ -16,7 +18,12 @@ export type Product = {
     categoryIds?: number[];
 };
 
-export default function DashboardWelcome() {
+interface DashboardWelcomeProps {
+    name: string;
+    profileImage?: string | null;
+}
+
+export default function DashboardWelcome({ name, profileImage }: DashboardWelcomeProps) {
     const [user, setUser] = useState<User | null>(null);
     const [artisanId, setArtisanId] = useState<number | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
@@ -27,20 +34,23 @@ export default function DashboardWelcome() {
 
     const router = useRouter();
 
-    // Load user and artisan
+    // Load user & artisan
     useEffect(() => {
         let isMounted = true;
+
         async function loadDashboard() {
             try {
                 const resUser = await fetch('/api/auth/me', { credentials: 'include' });
                 const dataUser = await resUser.json();
                 if (!isMounted) return;
+
                 setUser(dataUser?.user ?? null);
                 if (!dataUser?.user?.id) return;
 
                 const resArtisan = await fetch(`/api/artisans/by-user/${dataUser.user.id}`);
                 const dataArtisan = await resArtisan.json();
                 const artisanId = dataArtisan.artisan?.id ?? null;
+
                 setArtisanId(artisanId);
 
                 if (artisanId) {
@@ -54,6 +64,7 @@ export default function DashboardWelcome() {
                 if (isMounted) setLoading(false);
             }
         }
+
         loadDashboard();
         return () => { isMounted = false; };
     }, []);
@@ -70,21 +81,63 @@ export default function DashboardWelcome() {
         }
     };
 
-    const handleProductSelect = (productId: string) => {
-        const prod = products.find(p => p.id === Number(productId)) || null;
-        setSelectedProduct(prod);
-        setMode(prod ? 'manage' : 'add');
+    const handleProductSelect = async (productId: string) => {
+        if (!productId) {
+            setSelectedProduct(null);
+            setMode('add');
+            return;
+        }
+
+        const prod = products.find(p => p.id === Number(productId));
+        if (!prod) return;
+
+        try {
+            const res = await fetch(`/api/products/${productId}/categories`);
+            const data = await res.json();
+            const categoryIds: number[] = data.categoryIds || [];
+
+            setSelectedProduct({ ...prod, categoryIds });
+            setMode('manage');
+        } catch (err) {
+            console.error('Failed to load product categories', err);
+            setSelectedProduct({ ...prod, categoryIds: [] });
+            setMode('manage');
+        }
     };
+
 
     const username = user?.email?.split('@')[0];
     const welcomeText = loading ? 'Loading user...' : user ? `Welcome, ${username}!` : 'Welcome!';
+    console.log(welcomeText);
 
     return (
         <div className="w-full flex flex-col gap-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between
-                    bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
-                <p className="text-lg font-semibold text-gray-800">{welcomeText}</p>
+            {/* Profile Welcome Section */}
+            <div className="flex items-center gap-4 mb-2">
+                <h2 className="text-2xl font-semibold text-gray-900">
+                    Welcome, {name}
+                </h2>
+
+                {/* Profile image or placeholder */}
+                {profileImage ? (
+                    <Image
+                        src={profileImage}
+                        alt={name}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 rounded-full object-cover"
+                    />
+                ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-white font-bold">{name[0]}</span>
+                    </div>
+                )}
+            </div>
+
+
+            {/* Header with logout */}
+            <div className="flex flex-col sm:flex-row sm:items-center
+                bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
                 <Button
                     variant="outline"
                     onClick={handleLogout}
@@ -94,6 +147,7 @@ export default function DashboardWelcome() {
                     {loggingOut ? "Logging out..." : "Logout"}
                 </Button>
             </div>
+
 
             {/* Product Selector */}
             {products.length > 0 && (
@@ -114,7 +168,7 @@ export default function DashboardWelcome() {
             )}
 
             {/* Forms */}
-            {artisanId && (
+            {artisanId !== null && (
                 <AddProductForm
                     artisanId={artisanId}
                     mode={mode}
@@ -131,6 +185,8 @@ export default function DashboardWelcome() {
                 />
             )}
 
+
+            {/* Image Upload if product selected */}
             {artisanId && selectedProduct && (
                 <div className="mt-6">
                     <ImageUploader
@@ -143,5 +199,4 @@ export default function DashboardWelcome() {
             )}
         </div>
     );
-
 }
