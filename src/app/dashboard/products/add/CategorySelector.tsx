@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 type Category = {
     id: number;
@@ -9,12 +9,11 @@ type Category = {
 type Props = {
     selectedCategories: number[];
     setSelectedCategories: (ids: number[]) => void;
-    mode: 'add' | 'manage';
-    assignedCategories?: number[];
+    mode?: 'add' | 'manage';            // optional
+    assignedCategories?: number[];      // optional
 };
 
-const CategorySelector = ({ selectedCategories, setSelectedCategories, mode, assignedCategories }: Props) => {
-    const [initialized, setInitialized] = useState(false);
+const CategorySelector = ({ selectedCategories, setSelectedCategories }: Props) => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -26,20 +25,11 @@ const CategorySelector = ({ selectedCategories, setSelectedCategories, mode, ass
                 setCategories(data.categories || []);
                 setLoading(false);
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error('Error fetching categories:', error);
                 setLoading(false);
             });
     }, []);
-
-    // Initialize selectedCategories from assignedCategories only once
-    useEffect(() => {
-        if (mode === 'manage' && assignedCategories && !initialized) {
-            setSelectedCategories(assignedCategories);
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setInitialized(true);
-        }
-    }, [mode, assignedCategories, initialized, setSelectedCategories]);
 
     const toggleCategory = (id: number) => {
         if (selectedCategories.includes(id)) {
@@ -49,13 +39,8 @@ const CategorySelector = ({ selectedCategories, setSelectedCategories, mode, ass
         }
     };
 
-    if (loading) {
-        return <div className="text-gray-500">Loading categories...</div>;
-    }
-
-    if (categories.length === 0) {
-        return <div className="text-gray-500">No categories available</div>;
-    }
+    if (loading) return <div className="text-gray-500">Loading categories...</div>;
+    if (categories.length === 0) return <div className="text-gray-500">No categories available</div>;
 
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

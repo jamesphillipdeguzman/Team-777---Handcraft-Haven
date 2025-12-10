@@ -1,8 +1,39 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import DashboardWelcome from "@/components/DashboardWelcome";
 
 export default function DashboardPage() {
+    const [name, setName] = useState('');
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function loadUser() {
+            try {
+                const resUser = await fetch('/api/auth/me', { credentials: 'include' });
+                const dataUser = await resUser.json();
+                if (!dataUser?.user) return;
+
+                // Extract username from email
+                const username = dataUser.user.email?.split('@')[0] || '';
+                setName(username);
+
+                // Fetch artisan profile by user ID
+                const resArtisan = await fetch(`/api/artisans/by-user/${dataUser.user.id}`);
+                const dataArtisan = await resArtisan.json();
+                if (dataArtisan?.artisan?.profile_image) {
+                    setProfileImage(dataArtisan.artisan.profile_image);
+                }
+            } catch (err) {
+                console.error('Failed to load user or artisan', err);
+            }
+        }
+
+        loadUser();
+    }, []);
+
     return (
         <div className="flex min-h-screen flex-col bg-gray-50">
             <Navbar />
@@ -31,7 +62,7 @@ export default function DashboardPage() {
 
                     {/* Main Dashboard Components */}
                     <section className="space-y-6">
-                        <DashboardWelcome />
+                        <DashboardWelcome name={name} profileImage={profileImage} />
                     </section>
                 </div>
             </main>
