@@ -10,6 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { Check } from "lucide-react";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { ProductReviews } from "@/components/ProductReviews";
+import { useWishlist } from "@/context/wishlistContext";
 
 interface ProductImage {
   id: number;
@@ -43,6 +44,8 @@ export default function ProductDetailPage({
 }) {
   const resolvedParams = use(params);
   const productId = resolvedParams.id;
+  const { addToWishlist } = useWishlist();
+
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,9 +210,9 @@ export default function ProductDetailPage({
                     <button
                       key={img.id}
                       onClick={() => setSelectedImage(img.image_url)}
-                      className={`relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden border-2 transition-colors ${selectedImage === img.image_url
-                          ? "border-accent"
-                          : "border-transparent hover:border-muted-foreground"
+                      className={`relative w-20 h-20 shrink-0 rounded-md overflow-hidden border-2 transition-colors ${selectedImage === img.image_url
+                        ? "border-accent"
+                        : "border-transparent hover:border-muted-foreground"
                         }`}
                     >
                       <Image
@@ -313,7 +316,20 @@ export default function ProductDetailPage({
                     </>
                   )}
                 </Button>
-                <Button variant="outline" size="lg">
+                <Button
+
+                  variant="outline"
+                  onClick={() =>
+                    addToWishlist({
+                      id: product.id,
+                      name: product.name,
+                      description: product.description,
+                      price: product.price,
+                      image_url: product.images?.[0]?.image_url ?? undefined,
+                      artisan_name: product.artisan_name ?? undefined,
+                    })
+                  }
+                  size="lg">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -346,6 +362,7 @@ export default function ProductDetailPage({
               )}
             </div>
           </div>
+
 
           {/* Customer Reviews */}
           <ProductReviews productId={product.id} />
