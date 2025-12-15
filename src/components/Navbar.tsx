@@ -116,11 +116,11 @@ export function Navbar() {
             )}
 
             {/* Wishlist */}
-            <Button variant="ghost" size="icon" asChild className="icon-btn relative">
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/wishlist">
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="badge">
+                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                     {wishlistCount > 99 ? "99+" : wishlistCount}
                   </span>
                 )}
@@ -128,11 +128,11 @@ export function Navbar() {
             </Button>
 
             {/* Cart */}
-            <Button variant="ghost" size="icon" asChild className="icon-btn relative">
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <span className="badge">
+                  <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
@@ -188,7 +188,7 @@ export function Navbar() {
                 <Link href="/wishlist" className="relative text-sm font-medium hover:text-primary">
                   Wishlist
                   {wishlistCount > 0 && (
-                    <span className="badge">
+                    <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                       {wishlistCount > 99 ? "99+" : wishlistCount}
                     </span>
                   )}
@@ -197,7 +197,7 @@ export function Navbar() {
                 <Link href="/cart" className="relative text-sm font-medium hover:text-primary">
                   Cart
                   {cartCount > 0 && (
-                    <span className="badge">
+                    <span className="absolute -top-1 -right-1 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                       {cartCount > 99 ? "99+" : cartCount}
                     </span>
                   )}
