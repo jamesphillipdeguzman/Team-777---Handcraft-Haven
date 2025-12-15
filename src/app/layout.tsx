@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Handcraft Haven",
   description: "Handcraft Haven is a collaborative web project developed by Team 07. We built it as part of our WDD 430 (Web Full Stack Development) course.",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({

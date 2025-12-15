@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from "next/image";
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import AddProductForm from './dashboard/AddProductForm';
 import ImageUploader from './ImageUploader';
@@ -28,8 +28,8 @@ export type Product = {
 };
 
 interface DashboardWelcomeProps {
-    name: string; // fallback name from page
-    profileImage?: string | null; // optional fallback
+    name: string;
+    profileImage?: string | null;
 }
 
 export default function DashboardWelcome({ name, profileImage }: DashboardWelcomeProps) {
@@ -68,7 +68,6 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
                     const dataProducts = await resProducts.json();
                     setProducts(dataProducts.products || []);
                 }
-
             } catch (err) {
                 console.error('Error loading dashboard:', err);
             } finally {
@@ -77,7 +76,9 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
         }
 
         loadDashboard();
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleLogout = async () => {
@@ -92,7 +93,7 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
         }
     };
 
-    const handleProductSelect = async (productId: string) => {
+    const handleProductSelect = (productId: string) => {
         if (!productId) {
             setSelectedProduct(null);
             setMode('add');
@@ -102,118 +103,103 @@ export default function DashboardWelcome({ name, profileImage }: DashboardWelcom
         const prod = products.find(p => p.id === Number(productId));
         if (!prod) return;
 
-        try {
-            const res = await fetch(`/api/products/${productId}/categories`);
-            const data = await res.json();
-            const categoryIds: number[] = data.categoryIds || [];
-
-            setSelectedProduct({ ...prod, categoryIds });
-            setMode('manage');
-        } catch (err) {
-            console.error('Failed to load product categories', err);
-            setSelectedProduct({ ...prod, categoryIds: [] });
-            setMode('manage');
-        }
+        setSelectedProduct({ ...prod, categoryIds: prod.categoryIds || [] });
+        setMode('manage');
     };
 
-    // Compute displayName: artisan name > page prop name > email prefix
     const displayName = user?.artisan?.name || name || user?.email.split('@')[0] || 'User';
     const profileImgSrc = user?.artisan?.profile_image || profileImage || null;
 
     return (
-        <div className="w-full flex flex-col gap-6">
-            {/* Profile Welcome Section */}
-            <div className="flex items-center gap-4 mb-2">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                    Welcome, {displayName}!
-                </h2>
+        // Main container with background color
+        <main className="min-h-screen bg-background text-foreground font-sans px-4 py-6">
+            <div className="max-w-7xl mx-auto flex flex-col gap-6">
+                {/* Profile Welcome */}
+                <div className="flex items-center gap-4 mb-2">
+                    <h2 className="text-2xl font-semibold font-heading text-foreground">
+                        Welcome, {displayName}!
+                    </h2>
 
-                {/* Profile image or placeholder */}
-                {profileImgSrc ? (
-                    <Image
-                        src={profileImgSrc}
-                        alt={displayName}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full object-cover"
+                    {profileImgSrc ? (
+                        <Image
+                            src={profileImgSrc}
+                            alt={displayName}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                            <span className="text-accent-foreground font-bold">{displayName[0]}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Logout / Header Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center bg-card p-4 rounded-lg shadow border border-border gap-4">
+                    {!user ? (
+                        <Button variant="outline" onClick={() => router.push('/login')}>
+                            Login
+                        </Button>
+                    ) : (
+                        <Button variant="outline" onClick={handleLogout} disabled={loggingOut}>
+                            {loggingOut ? 'Logging out...' : 'Logout'}
+                        </Button>
+                    )}
+                </div>
+
+                {/* Product Selector */}
+                {products.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <label htmlFor="product-select" className="font-medium">
+                            Select Product:
+                        </label>
+                        <select
+                            id="product-select"
+                            value={selectedProduct?.id ?? ''}
+                            onChange={e => handleProductSelect(e.target.value)}
+                            className="border border-border rounded px-3 py-2 bg-card text-foreground"
+                        >
+                            <option value="">-- Add New Product --</option>
+                            {products.map(p => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Add/Manage Product Form */}
+                {artisanId !== null && (
+                    <AddProductForm
+                        artisanId={artisanId}
+                        mode={mode}
+                        product={selectedProduct ?? undefined}
+                        onSaved={savedProduct => {
+                            setSelectedProduct(savedProduct);
+                            setMode('manage');
+                            setProducts(prev =>
+                                prev.some(p => p.id === savedProduct.id)
+                                    ? prev.map(p => (p.id === savedProduct.id ? savedProduct : p))
+                                    : [...prev, savedProduct]
+                            );
+                        }}
                     />
-                ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-white font-bold">{displayName[0]}</span>
+                )}
+
+                {/* Image Uploader */}
+                {artisanId && selectedProduct && (
+                    <div className="mt-6">
+                        <ImageUploader
+                            mode="manage"
+                            product={selectedProduct}
+                            artisanId={artisanId}
+                            productId={selectedProduct.id}
+                        />
                     </div>
                 )}
             </div>
-
-            {/* Header with logout */}
-            <div className="flex flex-col sm:flex-row sm:items-center
-                bg-gray-50 p-4 rounded-lg shadow border border-gray-200">
-                {!user ? (
-                    <Button
-                        variant="outline"
-                        onClick={() => router.push('/login')}
-                        className="mt-2 sm:mt-0"
-                    >
-                        Login
-                    </Button>
-                ) : (
-                    <Button
-                        variant="outline"
-                        onClick={handleLogout}
-                        disabled={loggingOut}
-                        className="mt-2 sm:mt-0"
-                    >
-                        {loggingOut ? "Logging out..." : "Logout"}
-                    </Button>
-                )}
-            </div>
-
-            {/* Product Selector */}
-            {products.length > 0 && (
-                <div className="flex items-center gap-3">
-                    <label htmlFor="product-select" className="font-medium">Select Product:</label>
-                    <select
-                        id="product-select"
-                        value={selectedProduct?.id ?? ""}
-                        onChange={e => handleProductSelect(e.target.value)}
-                        className="border border-gray-300 rounded px-3 py-2"
-                    >
-                        <option value="">-- Add New Product --</option>
-                        {products.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
-
-            {/* Forms */}
-            {artisanId !== null && (
-                <AddProductForm
-                    artisanId={artisanId}
-                    mode={mode}
-                    product={selectedProduct ?? undefined}
-                    onSaved={(savedProduct) => {
-                        setSelectedProduct(savedProduct);
-                        setMode('manage');
-                        setProducts(prev =>
-                            prev.some(p => p.id === savedProduct.id)
-                                ? prev.map(p => p.id === savedProduct.id ? savedProduct : p)
-                                : [...prev, savedProduct]
-                        );
-                    }}
-                />
-            )}
-
-            {/* Image Upload if product selected */}
-            {artisanId && selectedProduct && (
-                <div className="mt-6">
-                    <ImageUploader
-                        mode="manage"
-                        product={selectedProduct}
-                        artisanId={artisanId}
-                        productId={selectedProduct.id}
-                    />
-                </div>
-            )}
-        </div>
+        </main>
     );
 }
